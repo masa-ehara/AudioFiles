@@ -1,8 +1,9 @@
 // @ts-check
 // 
-// ===== 共通音声再生スクリプト =====
+// ===== 共通音声再生・PDF表示スクリプト =====
 // 音声ファイルはHTML側の data-audio="001.mp3" で指定します。
-// 音声ファイルを追加するたびに、このJavaScriptを変更する必要はありません。
+// PDFファイルはHTML側の data-pdf="Google DriveのPDF URL" で指定します。
+// 音声ファイル・PDFファイルを追加するたびに、このJavaScriptを変更する必要はありません。
 
 const AUDIO_BASE_URL = "https://masa-ehara.github.io/AudioFiles/";
 
@@ -12,6 +13,7 @@ document.querySelectorAll(".audio-player").forEach((container) => {
   const fileName = element.dataset.audio ?? "";
   const title = element.dataset.title ?? "";
   const fntsize = element.dataset.fntsize ?? "16px";
+  const pdfUrl = element.dataset.pdf ?? "";
 
   const audio = document.createElement("audio");
   audio.preload = "metadata";
@@ -23,8 +25,8 @@ document.querySelectorAll(".audio-player").forEach((container) => {
 //  playButton.style.fontSize = "16px";
   playButton.style.fontSize = fntsize;
   playButton.style.padding = "0px 4px";
-//　playButton.style.border = "none";
-//　playButton.style.background = "none";
+//  playButton.style.border = "none";
+//  playButton.style.background = "none";
 
 //  playButton.style.marginRight = "8px";
   playButton.style.cursor = "pointer";
@@ -49,8 +51,15 @@ document.querySelectorAll(".audio-player").forEach((container) => {
   playButton.addEventListener("click", async () => {
     try {
       if (audio.paused || audio.ended) {
+
+        // PDFが指定されている場合、新しいタブでPDFを表示
+        if (pdfUrl) {
+          window.open(pdfUrl, "_blank");
+        }
+
         if (audio.ended) audio.currentTime = 0;
         await audio.play();
+
       } else {
         audio.pause();
       }
@@ -72,7 +81,7 @@ document.querySelectorAll(".audio-player").forEach((container) => {
 
   audio.addEventListener("play", () => {
 //    playButton.textContent = "⏸️ 説明を聞く";
-  playButton.textContent = "⏸️ " + title;
+    playButton.textContent = "⏸️ " + title;
 
 //    status.textContent = " ナレーション再生中…";
     status.textContent = "";
