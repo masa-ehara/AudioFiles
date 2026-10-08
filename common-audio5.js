@@ -115,6 +115,7 @@ audioPlayers.forEach((container, index) => {
   //
   // 次に play が発生した時だけ false に戻す。
   // ------------------------------------------------------------
+  let commandId = 0;
   let stopRequested = false;
 
   // ------------------------------------------------------------
@@ -123,101 +124,64 @@ audioPlayers.forEach((container, index) => {
   playButton.addEventListener("click", async () => {
     try {
       if (audio.paused || audio.ended) {
-        // ユーザーが新たに再生を開始したので、停止要求を解除する。
+        const myCommandId = ++commandId;
         stopRequested = false;
-
-        if (audio.ended) {
-          audio.currentTime = 0;
-        }
+        if (audio.ended) audio.currentTime = 0;
 
         await audio.play();
 
-        // play() は非同期のため、再生開始要求の途中で
-        // ⏹️が押された場合、await 後に再生が始まることがあります。
-        // その場合は直ちに停止して、資料も開きません。
-        if (stopRequested) {
+        // 停止要求が後から発生していたら、この古い再生要求を無効化する。
+        if (myCommandId !== commandId || stopRequested) {
           audio.pause();
           audio.currentTime = 0;
           return;
         }
 
-        // Uモードでない従来モードでは、
-        // 再生開始時にリンク先を新しいタブで開く。
         if (!isSeparatedMode && pdfUrl) {
           window.open(pdfUrl, "_blank");
         }
       } else {
-        // 一時停止
+        ++commandId;
+        stopRequested = true;
         audio.pause();
       }
     } catch (e) {
       status.textContent = " 音声を再生できませんでした";
-      stopButton.style.display = "none";
     }
   });
 
-  // ------------------------------------------------------------
-  // 停止ボタン
-  // ------------------------------------------------------------
-  // pointerdown の時点で先に非表示にする。
-  // Google Sites 側の click / pause イベントの順序に左右されないようにする。
   stopButton.addEventListener("pointerdown", () => {
+    // 古い play() の完了による再生復活を先に無効化する。
+    ++commandId;
     stopRequested = true;
     stopButton.style.display = "none";
   });
 
   stopButton.addEventListener("click", () => {
-    // 停止要求を記録する。
-    // このフラグは次回 play まで解除しない。
+    ++commandId;
     stopRequested = true;
-
-    // 念のため click 処理の冒頭でも非表示。
-    stopButton.style.display = "none";
 
     audio.pause();
     audio.currentTime = 0;
 
-    // play() の非同期処理と競合した場合に備え、
-    // 次のイベントループでも停止状態を再確認する。
-    if (!audio.paused) {
-      audio.pause();
-      audio.currentTime = 0;
-    }
-
-    if (isSeparatedMode) {
-      playButton.textContent = "🔈";
-      playButton.setAttribute("aria-label", `${title} 音声を再生`);
-    } else {
-      playButton.textContent = "🔈 " + title;
-    }
-
-    // pauseイベントが先に/後に発生しても、最後に必ず非表示にする。
-    stopButton.style.display = "none";
+    playButton.textContent = "🔈 " + title;
     status.textContent = "";
+    stopButton.style.display = "none";
   });
 
-  // ------------------------------------------------------------
-  // 再生開始
-  // ------------------------------------------------------------
   audio.addEventListener("play", () => {
-    if (isSeparatedMode) {
-      playButton.textContent = "⏸️";
-      playButton.setAttribute("aria-label", `${title} 音声を一時停止`);
-    } else {
-      playButton.textContent = "⏸️ " + title;
-    }
+    playButton.textContent = "⏸️ " + title;
+    status.textContent = "";
 
-    // 停止操作の直後に遅れて play イベントが発生しても、
-    // 停止ボタンを再表示しない。
     if (!stopRequested) {
       stopButton.style.display = "inline-block";
+    } else {
+      audio.pause();
+      audio.currentTime = 0;
+      stopButton.style.display = "none";
     }
-    status.textContent = "";
   });
 
-  // ------------------------------------------------------------
-  // 一時停止
-  // ------------------------------------------------------------
   audio.addEventListener("pause", () => {
     // 停止ボタンをクリックした結果の pause は無視する。
     //
