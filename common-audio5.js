@@ -132,6 +132,15 @@ audioPlayers.forEach((container, index) => {
 
         await audio.play();
 
+        // play() は非同期のため、再生開始要求の途中で
+        // ⏹️が押された場合、await 後に再生が始まることがあります。
+        // その場合は直ちに停止して、資料も開きません。
+        if (stopRequested) {
+          audio.pause();
+          audio.currentTime = 0;
+          return;
+        }
+
         // Uモードでない従来モードでは、
         // 再生開始時にリンク先を新しいタブで開く。
         if (!isSeparatedMode && pdfUrl) {
@@ -167,6 +176,13 @@ audioPlayers.forEach((container, index) => {
 
     audio.pause();
     audio.currentTime = 0;
+
+    // play() の非同期処理と競合した場合に備え、
+    // 次のイベントループでも停止状態を再確認する。
+    if (!audio.paused) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
 
     if (isSeparatedMode) {
       playButton.textContent = "🔈";
