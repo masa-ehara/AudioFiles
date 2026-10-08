@@ -123,6 +123,9 @@ audioPlayers.forEach((container, index) => {
   playButton.addEventListener("click", async () => {
     try {
       if (audio.paused || audio.ended) {
+        // ユーザーが新たに再生を開始したので、停止要求を解除する。
+        stopRequested = false;
+
         if (audio.ended) {
           audio.currentTime = 0;
         }
@@ -181,9 +184,6 @@ audioPlayers.forEach((container, index) => {
   // 再生開始
   // ------------------------------------------------------------
   audio.addEventListener("play", () => {
-    // 新しい再生が始まったので停止要求を解除する。
-    stopRequested = false;
-
     if (isSeparatedMode) {
       playButton.textContent = "⏸️";
       playButton.setAttribute("aria-label", `${title} 音声を一時停止`);
@@ -191,7 +191,11 @@ audioPlayers.forEach((container, index) => {
       playButton.textContent = "⏸️ " + title;
     }
 
-    stopButton.style.display = "inline-block";
+    // 停止操作の直後に遅れて play イベントが発生しても、
+    // 停止ボタンを再表示しない。
+    if (!stopRequested) {
+      stopButton.style.display = "inline-block";
+    }
     status.textContent = "";
   });
 
