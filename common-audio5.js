@@ -64,19 +64,24 @@ audioPlayers.forEach((container, index) => {
   element.replaceChildren();
 
   // ----- 音声再生ボタン -----
-  const playButton = document.createElement(
-    isSeparatedMode ? "span" : "button"
-  );
+  const playButton = document.createElement("button");
 
   if (isSeparatedMode) {
-    // Uモードでは、⏹️と同じくボタン枠を表示しない。
+    // Uモードでは⏹️と同じく、完全に枠なし・背景なしにする。
+    playButton.type = "button";
     playButton.style.fontSize = fntsize;
     playButton.style.cursor = "pointer";
     playButton.style.userSelect = "none";
     playButton.style.verticalAlign = "middle";
+    playButton.style.padding = "0";
+    playButton.style.margin = "0 4px 0 0";
+    playButton.style.border = "none";
+    playButton.style.outline = "none";
+    playButton.style.background = "transparent";
+    playButton.style.boxShadow = "none";
+    playButton.style.appearance = "none";
+    playButton.style.webkitAppearance = "none";
     playButton.textContent = "🔈";
-    playButton.setAttribute("role", "button");
-    playButton.setAttribute("tabindex", "0");
     playButton.setAttribute("aria-label", `${title} 音声を再生`);
   } else {
     playButton.type = "button";
@@ -166,7 +171,10 @@ audioPlayers.forEach((container, index) => {
   // window.open は使用せず、ブラウザ標準のリンク動作に任せる。
 
   // ----- 停止 -----
+  let stopping = false;
+
   stopButton.addEventListener("click", () => {
+    stopping = true;
     audio.pause();
     audio.currentTime = 0;
 
@@ -179,10 +187,13 @@ audioPlayers.forEach((container, index) => {
 
     stopButton.style.display = "none";
     status.textContent = "";
+    stopping = false;
   });
 
   // ----- 再生開始 -----
   audio.addEventListener("play", () => {
+    stopping = false;
+
     if (isSeparatedMode) {
       playButton.textContent = "⏸️";
       playButton.setAttribute("aria-label", `${title} 音声を一時停止`);
@@ -196,6 +207,10 @@ audioPlayers.forEach((container, index) => {
 
   // ----- 一時停止 -----
   audio.addEventListener("pause", () => {
+    if (stopping) {
+      return;
+    }
+
     if (!audio.ended) {
       if (isSeparatedMode) {
         playButton.textContent = "🔈";
