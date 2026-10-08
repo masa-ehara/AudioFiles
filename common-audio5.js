@@ -147,10 +147,20 @@ audioPlayers.forEach((container, index) => {
   // ------------------------------------------------------------
   // 停止ボタン
   // ------------------------------------------------------------
+  // pointerdown の時点で先に非表示にする。
+  // Google Sites 側の click / pause イベントの順序に左右されないようにする。
+  stopButton.addEventListener("pointerdown", () => {
+    stopRequested = true;
+    stopButton.style.display = "none";
+  });
+
   stopButton.addEventListener("click", () => {
-    // ここで停止要求を記録する。
+    // 停止要求を記録する。
     // このフラグは次回 play まで解除しない。
     stopRequested = true;
+
+    // 念のため click 処理の冒頭でも非表示。
+    stopButton.style.display = "none";
 
     audio.pause();
     audio.currentTime = 0;
@@ -162,7 +172,7 @@ audioPlayers.forEach((container, index) => {
       playButton.textContent = "🔈 " + title;
     }
 
-    // ここで即座に非表示。
+    // pauseイベントが先に/後に発生しても、最後に必ず非表示にする。
     stopButton.style.display = "none";
     status.textContent = "";
   });
