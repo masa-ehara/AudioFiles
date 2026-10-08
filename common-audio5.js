@@ -64,18 +64,26 @@ audioPlayers.forEach((container, index) => {
   element.replaceChildren();
 
   // ----- 音声再生ボタン -----
-  const playButton = document.createElement("button");
-  playButton.type = "button";
-  playButton.style.fontSize = fntsize;
-  playButton.style.padding = "0px 4px";
-  playButton.style.cursor = "pointer";
-  playButton.style.verticalAlign = "middle";
+  const playButton = document.createElement(
+    isSeparatedMode ? "span" : "button"
+  );
 
-  // Uモードでは音声ボタンと表示名を分離
   if (isSeparatedMode) {
+    // Uモードでは、⏹️と同じくボタン枠を表示しない。
+    playButton.style.fontSize = fntsize;
+    playButton.style.cursor = "pointer";
+    playButton.style.userSelect = "none";
+    playButton.style.verticalAlign = "middle";
     playButton.textContent = "🔈";
+    playButton.setAttribute("role", "button");
+    playButton.setAttribute("tabindex", "0");
     playButton.setAttribute("aria-label", `${title} 音声を再生`);
   } else {
+    playButton.type = "button";
+    playButton.style.fontSize = fntsize;
+    playButton.style.padding = "0px 4px";
+    playButton.style.cursor = "pointer";
+    playButton.style.verticalAlign = "middle";
     playButton.textContent = "🔈 " + title;
   }
 
