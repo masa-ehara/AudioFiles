@@ -52,13 +52,13 @@ document.querySelectorAll(".audio-player").forEach((container) => {
     try {
       if (audio.paused || audio.ended) {
 
+        if (audio.ended) audio.currentTime = 0;
+        await audio.play();
+
         // PDFが指定されている場合、新しいタブでPDFを表示
         if (pdfUrl) {
           window.open(pdfUrl, "_blank");
         }
-
-        if (audio.ended) audio.currentTime = 0;
-        await audio.play();
 
       } else {
         audio.pause();
