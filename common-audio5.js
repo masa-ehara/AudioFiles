@@ -11,13 +11,13 @@
 // 【通常モード】data-mode を省略
 //   音声あり：🔈 ボタンで音声再生／一時停止
 //             data-pdf が指定されていれば資料も新しいタブで開く
-//   音声なし：▪＋表示名を表示
+//   音声なし：▪️＋表示名を表示
 //             data-pdf が指定されていればクリックで資料を開く
 //
 // 【Uモード】data-mode="U"
 //   音声あり：🔈 ボタン → 音声のみ再生／一時停止
 //             表示名 → data-pdf を新しいタブで開く
-//   音声なし：▪ ボタン＋表示名
+//   音声なし：▪️ ボタン＋表示名
 //             表示名 → data-pdf を新しいタブで開く
 //
 // 【停止ボタン】
@@ -84,7 +84,7 @@ audioPlayers.forEach((container, index) => {
   // Uモードでは音声ボタンと表示名を分離
   if (isSeparatedMode) {
     if (isNoAudio) {
-      playButton.textContent = "▪";
+      playButton.textContent = "▪️";
       playButton.setAttribute("aria-label", `${title} 音声なし`);
       playButton.style.cursor = "default";
     } else {
@@ -92,7 +92,7 @@ audioPlayers.forEach((container, index) => {
       playButton.setAttribute("aria-label", `${title} 音声を再生`);
     }
   } else {
-    playButton.textContent = (isNoAudio ? "▪ " : "🔈 ") + title;
+    playButton.textContent = (isNoAudio ? "▪️" : "🔈 ") + title;
     if (isNoAudio && !pdfUrl) {
       playButton.style.cursor = "default";
     }
@@ -242,7 +242,7 @@ audioPlayers.forEach((container, index) => {
   } else {
     // ----- 音声なし項目 -----
     // Uモードでは資料表示は表示名リンク側に任せる。
-    // 通常モードでは、PDFがあれば ▪＋表示名 のボタンから開く。
+    // 通常モードでは、PDFがあれば ▪️＋表示名 のボタンから開く。
     if (!isSeparatedMode && pdfUrl) {
       playButton.addEventListener("click", () => {
         window.open(pdfUrl, "_blank");
