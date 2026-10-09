@@ -76,8 +76,6 @@ audioPlayers.forEach((container, index) => {
   playButton.type = "button";
   playButton.style.fontSize = fntsize;
   playButton.style.padding = "0px 4px";
-  playButton.style.border = "none";
-  playButton.style.background = "none";
   playButton.style.cursor = "pointer";
   playButton.style.verticalAlign = "middle";
 
