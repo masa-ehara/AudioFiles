@@ -76,6 +76,8 @@ audioPlayers.forEach((container, index) => {
   playButton.type = "button";
   playButton.style.fontSize = fntsize;
   playButton.style.padding = "0px 4px";
+  playButton.style.border = "none";
+  playButton.style.background = "none";
   playButton.style.cursor = "pointer";
   playButton.style.verticalAlign = "middle";
 
@@ -106,6 +108,9 @@ audioPlayers.forEach((container, index) => {
     titleLink.target = "_blank";
     titleLink.rel = "noopener noreferrer";
     titleLink.style.fontSize = fntsize;
+    titleLink.style.color = "#06c";
+    titleLink.style.textDecoration = "underline";
+    titleLink.style.display = "inline-block";
     titleLink.style.cursor = pdfUrl ? "pointer" : "default";
     titleLink.style.verticalAlign = "middle";
 
