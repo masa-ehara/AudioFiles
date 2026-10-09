@@ -84,7 +84,7 @@ audioPlayers.forEach((container, index) => {
   // Uモードでは音声ボタンと表示名を分離
   if (isSeparatedMode) {
     if (isNoAudio) {
-      playButton.textContent = "🔳";
+      playButton.textContent = "▪";
       playButton.setAttribute("aria-label", `${title} 音声なし`);
       playButton.style.cursor = "default";
     } else {
