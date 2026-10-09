@@ -11,13 +11,13 @@
 // 【通常モード】data-mode を省略
 //   音声あり：🔈 ボタンで音声再生／一時停止
 //             data-pdf が指定されていれば資料も新しいタブで開く
-//   音声なし：▪️＋表示名を表示
+//   音声なし：▪＋表示名を表示
 //             data-pdf が指定されていればクリックで資料を開く
 //
 // 【Uモード】data-mode="U"
 //   音声あり：🔈 ボタン → 音声のみ再生／一時停止
 //             表示名 → data-pdf を新しいタブで開く
-//   音声なし：▪️ ボタン＋表示名
+//   音声なし：▪ ボタン＋表示名
 //             表示名 → data-pdf を新しいタブで開く
 //
 // 【停止ボタン】
@@ -76,16 +76,18 @@ audioPlayers.forEach((container, index) => {
   playButton.type = "button";
   playButton.style.fontSize = fntsize;
   playButton.style.padding = "0px 4px";
+  // 通常モードの「音声あり」だけ、従来どおり外枠付きボタンにする。
+  // Uモード、および音声なし項目の表示は変更しない。
+  if (!isSeparatedMode && !isNoAudio) {
+    playButton.style.border = "1px solid #767676";
+    playButton.style.borderRadius = "2px";
+    playButton.style.background = "#efefef";
+  } else {
+    playButton.style.border = "none";
+    playButton.style.background = "none";
+  }
   playButton.style.cursor = "pointer";
   playButton.style.verticalAlign = "middle";
-
-  // 音声なし項目は、音声ボタンと同じ「ボタン」として見えるように
-  // 枠線・背景を明示する（ブラウザ既定スタイルに依存しない）。
-  if (isNoAudio) {
-    playButton.style.border = "1px solid #888";
-    playButton.style.borderRadius = "2px";
-    playButton.style.background = "#f5f5f5";
-  }
 
   // Uモードでは音声ボタンと表示名を分離
   if (isSeparatedMode) {
@@ -248,7 +250,7 @@ audioPlayers.forEach((container, index) => {
   } else {
     // ----- 音声なし項目 -----
     // Uモードでは資料表示は表示名リンク側に任せる。
-    // 通常モードでは、PDFがあれば ▪️＋表示名 のボタンから開く。
+    // 通常モードでは、PDFがあれば ▪＋表示名 のボタンから開く。
     if (!isSeparatedMode && pdfUrl) {
       playButton.addEventListener("click", () => {
         window.open(pdfUrl, "_blank");
