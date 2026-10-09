@@ -79,10 +79,18 @@ audioPlayers.forEach((container, index) => {
   playButton.style.cursor = "pointer";
   playButton.style.verticalAlign = "middle";
 
+  // 音声なし項目は、音声ボタンと同じ「ボタン」として見えるように
+  // 枠線・背景を明示する（ブラウザ既定スタイルに依存しない）。
+  if (isNoAudio) {
+    playButton.style.border = "1px solid #888";
+    playButton.style.borderRadius = "2px";
+    playButton.style.background = "#f5f5f5";
+  }
+
   // Uモードでは音声ボタンと表示名を分離
   if (isSeparatedMode) {
     if (isNoAudio) {
-      playButton.textContent = "◾️";
+      playButton.textContent = "▪";
       playButton.setAttribute("aria-label", `${title} 音声なし`);
       playButton.style.cursor = "default";
     } else {
@@ -90,7 +98,7 @@ audioPlayers.forEach((container, index) => {
       playButton.setAttribute("aria-label", `${title} 音声を再生`);
     }
   } else {
-    playButton.textContent = (isNoAudio ? "◾️" : "🔈 ") + title;
+    playButton.textContent = (isNoAudio ? "▪ " : "🔈 ") + title;
     if (isNoAudio && !pdfUrl) {
       playButton.style.cursor = "default";
     }
