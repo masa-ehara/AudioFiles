@@ -47,7 +47,20 @@ audioPlayers.forEach((container, index) => {
   const isNoAudio =
     (element.dataset.noaudio ?? "").toLowerCase() === "true" || !fileName;
 
+  const isHeaderMode = mode === "H";
   const isSeparatedMode = mode === "U";
+
+  // ----- H（Header）モード -----
+  // Hモードはタイトルだけを表示し、先頭記号・音声ボタン・PDF表示は行わない。
+  if (isHeaderMode) {
+    const header = document.createElement("span");
+    header.textContent = title;
+    header.style.fontSize = fntsize;
+    header.style.display = "inline-block";
+    header.style.verticalAlign = "middle";
+    element.appendChild(header);
+    return;
+  }
 
   // ----- 音声 -----
   // 音声なし項目では audio 要素そのものを作成しない。
