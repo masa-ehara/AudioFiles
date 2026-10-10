@@ -83,11 +83,15 @@ audioPlayers.forEach((container, index) => {
   // Uモード（音声あり／なし）と音声なし項目は枠・背景なし。
   // Google Sites側のbutton CSSに負けないよう !important を使用する。
   if (!isSeparatedMode && !isNoAudio) {
+    // 通常モード：以前の表示と同じく、グレー背景＋外枠。
+    // appearance は native 描画に任せず、CSSで背景色を確実に表示する。
     playButton.style.setProperty("border", "1px solid #767676", "important");
     playButton.style.setProperty("border-radius", "2px", "important");
-    playButton.style.setProperty("background", "#efefef", "important");
+    playButton.style.setProperty("background-color", "#ededed", "important");
+    playButton.style.setProperty("background-image", "none", "important");
     playButton.style.setProperty("box-shadow", "none", "important");
-    playButton.style.setProperty("appearance", "auto", "important");
+    playButton.style.setProperty("appearance", "none", "important");
+    playButton.style.setProperty("-webkit-appearance", "none", "important");
   } else {
     playButton.style.setProperty("border", "none", "important");
     playButton.style.setProperty("border-radius", "0", "important");
