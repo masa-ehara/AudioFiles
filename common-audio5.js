@@ -76,12 +76,27 @@ audioPlayers.forEach((container, index) => {
   playButton.type = "button";
   playButton.style.fontSize = fntsize;
   playButton.style.padding = "0px 4px";
-  // 通常モードの音声あり項目だけ外枠を表示。
-  // Uモードと音声なし項目は従来どおり枠なし。
-  playButton.style.border = (!isSeparatedMode && !isNoAudio) ? "1px solid #888" : "none";
-  playButton.style.background = "none";
-  playButton.style.cursor = "pointer";
   playButton.style.verticalAlign = "middle";
+
+  // ===== ボタン枠・背景の扱い =====
+  // 通常モード＋音声ありだけ、外枠＋グレー背景を表示。
+  // Uモード（音声あり／なし）と音声なし項目は枠・背景なし。
+  // Google Sites側のbutton CSSに負けないよう !important を使用する。
+  if (!isSeparatedMode && !isNoAudio) {
+    playButton.style.setProperty("border", "1px solid #767676", "important");
+    playButton.style.setProperty("border-radius", "2px", "important");
+    playButton.style.setProperty("background", "#efefef", "important");
+    playButton.style.setProperty("box-shadow", "none", "important");
+    playButton.style.setProperty("appearance", "auto", "important");
+  } else {
+    playButton.style.setProperty("border", "none", "important");
+    playButton.style.setProperty("border-radius", "0", "important");
+    playButton.style.setProperty("background", "transparent", "important");
+    playButton.style.setProperty("box-shadow", "none", "important");
+    playButton.style.setProperty("appearance", "none", "important");
+  }
+
+  playButton.style.cursor = "pointer";
 
   // Uモードでは音声ボタンと表示名を分離
   if (isSeparatedMode) {
