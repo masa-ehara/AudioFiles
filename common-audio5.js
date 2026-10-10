@@ -52,12 +52,26 @@ audioPlayers.forEach((container, index) => {
 
   // ----- H（Header）モード -----
   // Hモードはタイトルだけを表示し、先頭記号・音声ボタン・PDF表示は行わない。
+  // タイトルが空欄の場合は、1行分の空白行として扱う。
   if (isHeaderMode) {
+    element.style.margin = "0";
+    element.style.padding = "0";
+    element.style.lineHeight = "1.2";
+    element.style.marginBottom =
+      index < audioPlayers.length - 1 ? fntsize : "0";
+    element.replaceChildren();
+
     const header = document.createElement("span");
     header.textContent = title;
     header.style.fontSize = fntsize;
-    header.style.display = "inline-block";
+    header.style.display = "block";
     header.style.verticalAlign = "middle";
+
+    if (title === "") {
+      // 空白H：文字サイズ1行分の高さを確保して行間調整に使用
+      header.style.height = fntsize;
+    }
+
     element.appendChild(header);
     return;
   }
