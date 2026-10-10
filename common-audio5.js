@@ -1,16 +1,36 @@
 // @ts-check
 //
-// ===== 共通音声再生・PDF表示スクリプト 完成版 =====
-// ・data-audio   : 音声ファイル名（音声ありの場合）
-// ・data-title   : 表示名
+// ===== 共通音声再生・PDF表示スクリプト 改良版 =====
+// ・data-audio : 音声ファイル名（音声ありの場合）
+// ・data-title : 表示名
 // ・data-fntsize : 文字サイズ（省略時 16px）
-// ・data-pdf     : PDFまたはGoogle Driveフォルダ等の表示先URL
-// ・data-mode    : "U" = 音声操作と資料表示を分離
-//                  "H" = Header（タイトルだけ表示）
+// ・data-pdf : PDFまたはGoogle Driveフォルダ等の表示先URL
+// ・data-mode : "U" の場合、音声操作と資料表示を分離
 // ・data-noaudio : "true" の場合、音声なし資料として表示
 //
-// Hモードでは、資料タイトルをそのまま表示し、
-// 先頭記号・音声ボタン・PDF表示は行わない。
+// 【通常モード】data-mode を省略
+//   音声あり：🔈 ボタンで音声再生／一時停止
+//             data-pdf が指定されていれば資料も新しいタブで開く
+//   音声なし：▪️＋表示名を表示
+//             data-pdf が指定されていればクリックで資料を開く
+//
+// 【Uモード】data-mode="U"
+//   音声あり：🔈 ボタン → 音声のみ再生／一時停止
+//             表示名 → data-pdf を新しいタブで開く
+//   音声なし：▪️ ボタン＋表示名
+//             表示名 → data-pdf を新しいタブで開く
+//
+// 【停止ボタン】
+//   初期状態：非表示
+//   音声再生開始：表示
+//   一時停止・再開：表示
+//   停止：非表示
+//   再生終了：非表示
+//
+// 【複数項目】
+//   同一HTML内に .audio-player を複数配置可能。
+//   各項目の下側余白は data-fntsize と同じ値。
+//   したがって、音声あり／なしが混在しても同じ間隔で表示されます。
 
 const AUDIO_BASE_URL = "https://masa-ehara.github.io/AudioFiles/";
 
@@ -24,37 +44,13 @@ audioPlayers.forEach((container, index) => {
   const fntsize = element.dataset.fntsize ?? "16px";
   const pdfUrl = element.dataset.pdf ?? "";
   const mode = (element.dataset.mode ?? "").toUpperCase();
-
-  const isHeaderMode = mode === "H";
-  const isSeparatedMode = mode === "U";
-
   const isNoAudio =
     (element.dataset.noaudio ?? "").toLowerCase() === "true" || !fileName;
 
-  // 共通の項目間隔。
-  element.style.margin = "0";
-  element.style.padding = "0";
-  element.style.lineHeight = "1.2";
-  element.style.marginBottom =
-    index < audioPlayers.length - 1 ? fntsize : "0";
-
-  // 既存HTMLから生成物が二重になるのを防止。
-  element.replaceChildren();
-
-  // ----- H（Header）モード -----
-  // タイトルだけをそのまま表示する。
-  if (isHeaderMode) {
-    const header = document.createElement("span");
-    header.textContent = title;
-    header.style.fontSize = fntsize;
-    header.style.display = "inline-block";
-    header.style.verticalAlign = "middle";
-
-    element.appendChild(header);
-    return;
-  }
+  const isSeparatedMode = mode === "U";
 
   // ----- 音声 -----
+  // 音声なし項目では audio 要素そのものを作成しない。
   let audio = null;
   if (!isNoAudio) {
     audio = document.createElement("audio");
@@ -62,17 +58,32 @@ audioPlayers.forEach((container, index) => {
     audio.src = AUDIO_BASE_URL + encodeURIComponent(fileName);
   }
 
+  // ----- 表示領域 -----
+  // 複数項目を1ブロックに入れた場合、
+  // 各項目の間隔を文字サイズと同じ値にする。
+  element.style.margin = "0";
+  element.style.padding = "0";
+  element.style.lineHeight = "1.2";
+  // 項目間の間隔だけを設定し、最後の項目の下には余白を付けない。
+  element.style.marginBottom =
+    index < audioPlayers.length - 1 ? fntsize : "0";
+
+  // 既存HTMLから生成物が二重になるのを防止
+  element.replaceChildren();
+
   // ----- 音声再生／資料表示ボタン -----
   const playButton = document.createElement("button");
   playButton.type = "button";
   playButton.style.fontSize = fntsize;
   playButton.style.padding = "0px 4px";
-  playButton.style.border = "none";
+  // 通常モードの音声あり項目だけ外枠を表示。
+  // Uモードと音声なし項目は従来どおり枠なし。
+  playButton.style.border = (!isSeparatedMode && !isNoAudio) ? "1px solid #888" : "none";
   playButton.style.background = "none";
   playButton.style.cursor = "pointer";
   playButton.style.verticalAlign = "middle";
 
-  // Uモードでは音声ボタンと表示名を分離。
+  // Uモードでは音声ボタンと表示名を分離
   if (isSeparatedMode) {
     if (isNoAudio) {
       playButton.textContent = "◾️";
@@ -105,6 +116,8 @@ audioPlayers.forEach((container, index) => {
     titleLink.style.cursor = pdfUrl ? "pointer" : "default";
     titleLink.style.verticalAlign = "middle";
 
+    // Uモードでは表示名を常時下線表示。
+    // PDF/フォルダURLがない場合はクリックしても遷移しない。
     if (!pdfUrl) {
       titleLink.removeAttribute("href");
       titleLink.removeAttribute("target");
@@ -128,6 +141,8 @@ audioPlayers.forEach((container, index) => {
   stopButton.style.padding = "0px 2px";
   stopButton.style.cursor = "pointer";
   stopButton.style.verticalAlign = "middle";
+
+  // 初期状態では非表示
   stopButton.style.display = "none";
 
   element.appendChild(stopButton);
@@ -148,7 +163,8 @@ audioPlayers.forEach((container, index) => {
 
           await audio.play();
 
-          // 通常モードでは音声ボタンのクリックで資料も開く。
+          // 通常モードでは従来どおり、
+          // 音声ボタンのクリックで資料も開く。
           // Uモードでは資料表示を行わない。
           if (!isSeparatedMode && pdfUrl) {
             window.open(pdfUrl, "_blank");
@@ -201,6 +217,7 @@ audioPlayers.forEach((container, index) => {
           playButton.textContent = "🔈 " + title;
         }
 
+        // 一時停止中は停止ボタンを表示したまま
         stopButton.style.display = "inline-block";
         status.textContent = "";
       }
@@ -227,7 +244,7 @@ audioPlayers.forEach((container, index) => {
   } else {
     // ----- 音声なし項目 -----
     // Uモードでは資料表示は表示名リンク側に任せる。
-    // 通常モードでは、PDFがあれば ◾️＋表示名 のボタンから開く。
+    // 通常モードでは、PDFがあれば ▪️＋表示名 のボタンから開く。
     if (!isSeparatedMode && pdfUrl) {
       playButton.addEventListener("click", () => {
         window.open(pdfUrl, "_blank");
