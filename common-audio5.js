@@ -61,14 +61,10 @@ audioPlayers.forEach((container, index) => {
     header.style.fontSize = fntsize;
     header.style.display = "inline-block";
     header.style.verticalAlign = "middle";
-
-    // 表示文字が空のHモードでも、1行分の領域を確保する。
     if (!title) {
       header.style.minHeight = fntsize;
-      element.style.minHeight = fntsize;
-      element.style.marginBottom = fntsize;
+      header.style.lineHeight = "1.2";
     }
-
     element.appendChild(header);
     return;
   }
@@ -101,6 +97,9 @@ audioPlayers.forEach((container, index) => {
   playButton.style.fontSize = fntsize;
   playButton.style.padding = "0px 4px";
   playButton.style.verticalAlign = "middle";
+  playButton.style.display = "inline-block";
+  playButton.style.lineHeight = "normal";
+  playButton.style.minHeight = "1.5em";
 
   // ===== ボタン枠・背景の扱い =====
   // 通常モード＋音声ありだけ、外枠＋グレー背景を表示。
@@ -185,11 +184,11 @@ audioPlayers.forEach((container, index) => {
   stopButton.style.cursor = "pointer";
   stopButton.style.verticalAlign = "middle";
 
-  // 初期状態では非表示だが、表示領域は確保する。
-  // Google Sites / iPhone Safari で行ボックスの高さが縮み、
-  // 音声ボタンが上下方向に欠けるのを防止する。
-  stopButton.style.visibility = "hidden";
+  // 初期状態でも表示領域は確保する。
+  // visibility:hidden ならレイアウト上の幅・高さを保持したまま、
+  // iPhone / Google Sites の行折返し時にも次行へ落ちにくくなる。
   stopButton.style.display = "inline-block";
+  stopButton.style.visibility = "hidden";
 
   element.appendChild(stopButton);
 
@@ -242,6 +241,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "⏸️ " + title;
       }
 
+      stopButton.style.display = "inline-block";
       stopButton.style.visibility = "visible";
     });
 
@@ -256,7 +256,8 @@ audioPlayers.forEach((container, index) => {
         }
 
         // 一時停止中は停止ボタンを表示したまま
-        stopButton.style.visibility = "visible";
+        stopButton.style.display = "inline-block";
+      stopButton.style.visibility = "visible";
         }
     });
 
