@@ -195,8 +195,11 @@ audioPlayers.forEach((container, index) => {
   stopButton.style.cursor = "pointer";
   stopButton.style.verticalAlign = "middle";
 
-  // 初期状態では非表示
-  stopButton.style.display = "none";
+  // 初期状態では非表示だが、表示領域は常に確保する。
+  // display:none にすると、再生開始・停止時に⏹️の幅だけ表示位置が移動するため、
+  // visibility:hidden で見えなくする。
+  stopButton.style.display = "inline-block";
+  stopButton.style.visibility = "hidden";
 
   element.appendChild(stopButton);
 
@@ -221,7 +224,7 @@ audioPlayers.forEach((container, index) => {
           audio.pause();
         }
       } catch (e) {
-        stopButton.style.display = "none";
+        stopButton.style.visibility = "hidden";
       }
     });
 
@@ -237,7 +240,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopButton.style.display = "none";
+      stopButton.style.visibility = "hidden";
     });
 
     // ----- 再生開始 -----
@@ -249,7 +252,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "⏸️ " + title;
       }
 
-      stopButton.style.display = "inline-block";
+      stopButton.style.visibility = "visible";
     });
 
     // ----- 一時停止 -----
@@ -263,7 +266,7 @@ audioPlayers.forEach((container, index) => {
         }
 
         // 一時停止中は停止ボタンを表示したまま
-        stopButton.style.display = "inline-block";
+        stopButton.style.visibility = "visible";
       }
     });
 
@@ -276,7 +279,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopButton.style.display = "none";
+      stopButton.style.visibility = "hidden";
     });
 
     // ----- ページ離脱 -----
