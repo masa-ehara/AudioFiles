@@ -11,16 +11,19 @@
 // 【通常モード】data-mode を省略
 //   音声あり：🔈 ボタンで音声再生／一時停止
 //             data-pdf が指定されていれば資料も新しいタブで開く
-//   音声なし：▪️＋表示名を表示
+//   音声なし：🔳＋表示名を表示
 //             data-pdf が指定されていればクリックで資料を開く
 //
 // 【Uモード】data-mode="U"
 //   音声あり：🔈 ボタン → 音声のみ再生／一時停止
 //             表示名 → data-pdf を新しいタブで開く
-//   音声なし：▪️ ボタン＋表示名
+//   音声なし：🔳 ボタン＋表示名
 //             表示名 → data-pdf を新しいタブで開く
 //
-// 【停止ボタン】
+// 【ステータス表示】
+ //   ステータス表示領域は生成せず、画面上の余白を発生させない。
+ //
+ // 【停止ボタン】
 //   初期状態：非表示
 //   音声再生開始：表示
 //   一時停止・再開：表示
@@ -47,34 +50,7 @@ audioPlayers.forEach((container, index) => {
   const isNoAudio =
     (element.dataset.noaudio ?? "").toLowerCase() === "true" || !fileName;
 
-  const isHeaderMode = mode === "H";
   const isSeparatedMode = mode === "U";
-
-  // ----- H（Header）モード -----
-  // Hモードはタイトルだけを表示し、先頭記号・音声ボタン・PDF表示は行わない。
-  // タイトルが空欄の場合は、1行分の空白行として扱う。
-  if (isHeaderMode) {
-    element.style.margin = "0";
-    element.style.padding = "0";
-    element.style.lineHeight = "1.2";
-    element.style.marginBottom =
-      index < audioPlayers.length - 1 ? fntsize : "0";
-    element.replaceChildren();
-
-    const header = document.createElement("span");
-    header.textContent = title;
-    header.style.fontSize = fntsize;
-    header.style.display = "block";
-    header.style.verticalAlign = "middle";
-
-    if (title === "") {
-      // 空白H：文字サイズ1行分の高さを確保して行間調整に使用
-      header.style.height = fntsize;
-    }
-
-    element.appendChild(header);
-    return;
-  }
 
   // ----- 音声 -----
   // 音声なし項目では audio 要素そのものを作成しない。
@@ -103,36 +79,13 @@ audioPlayers.forEach((container, index) => {
   playButton.type = "button";
   playButton.style.fontSize = fntsize;
   playButton.style.padding = "0px 4px";
-  playButton.style.verticalAlign = "middle";
-
-  // ===== ボタン枠・背景の扱い =====
-  // 通常モード＋音声ありだけ、外枠＋グレー背景を表示。
-  // Uモード（音声あり／なし）と音声なし項目は枠・背景なし。
-  // Google Sites側のbutton CSSに負けないよう !important を使用する。
-  if (!isSeparatedMode && !isNoAudio) {
-    // 通常モード：以前の表示と同じく、グレー背景＋外枠。
-    // appearance は native 描画に任せず、CSSで背景色を確実に表示する。
-    playButton.style.setProperty("border", "1px solid #767676", "important");
-    playButton.style.setProperty("border-radius", "2px", "important");
-    playButton.style.setProperty("background-color", "#ededed", "important");
-    playButton.style.setProperty("background-image", "none", "important");
-    playButton.style.setProperty("box-shadow", "none", "important");
-    playButton.style.setProperty("appearance", "none", "important");
-    playButton.style.setProperty("-webkit-appearance", "none", "important");
-  } else {
-    playButton.style.setProperty("border", "none", "important");
-    playButton.style.setProperty("border-radius", "0", "important");
-    playButton.style.setProperty("background", "transparent", "important");
-    playButton.style.setProperty("box-shadow", "none", "important");
-    playButton.style.setProperty("appearance", "none", "important");
-  }
-
   playButton.style.cursor = "pointer";
+  playButton.style.verticalAlign = "middle";
 
   // Uモードでは音声ボタンと表示名を分離
   if (isSeparatedMode) {
     if (isNoAudio) {
-      playButton.textContent = "◾️";
+      playButton.textContent = "🔳";
       playButton.setAttribute("aria-label", `${title} 音声なし`);
       playButton.style.cursor = "default";
     } else {
@@ -140,7 +93,7 @@ audioPlayers.forEach((container, index) => {
       playButton.setAttribute("aria-label", `${title} 音声を再生`);
     }
   } else {
-    playButton.textContent = (isNoAudio ? "◾️" : "🔈 ") + title;
+    playButton.textContent = (isNoAudio ? "🔳 " : "🔈 ") + title;
     if (isNoAudio && !pdfUrl) {
       playButton.style.cursor = "default";
     }
@@ -156,9 +109,6 @@ audioPlayers.forEach((container, index) => {
     titleLink.target = "_blank";
     titleLink.rel = "noopener noreferrer";
     titleLink.style.fontSize = fntsize;
-    titleLink.style.color = "#06c";
-    titleLink.style.textDecoration = "underline";
-    titleLink.style.display = "inline-block";
     titleLink.style.cursor = pdfUrl ? "pointer" : "default";
     titleLink.style.verticalAlign = "middle";
 
@@ -193,12 +143,7 @@ audioPlayers.forEach((container, index) => {
 
   element.appendChild(stopButton);
 
-  // ----- ステータス -----
-  const status = document.createElement("span");
-  status.textContent = "";
-  element.appendChild(status);
-
-  // ----- 音声あり項目の処理 -----
+    // ----- 音声あり項目の処理 -----
   if (!isNoAudio && audio) {
     playButton.addEventListener("click", async () => {
       try {
@@ -219,7 +164,6 @@ audioPlayers.forEach((container, index) => {
           audio.pause();
         }
       } catch (e) {
-        status.textContent = " 音声を再生できませんでした";
         stopButton.style.display = "none";
       }
     });
@@ -237,7 +181,6 @@ audioPlayers.forEach((container, index) => {
       }
 
       stopButton.style.display = "none";
-      status.textContent = "";
     });
 
     // ----- 再生開始 -----
@@ -250,7 +193,6 @@ audioPlayers.forEach((container, index) => {
       }
 
       stopButton.style.display = "inline-block";
-      status.textContent = "";
     });
 
     // ----- 一時停止 -----
@@ -265,8 +207,7 @@ audioPlayers.forEach((container, index) => {
 
         // 一時停止中は停止ボタンを表示したまま
         stopButton.style.display = "inline-block";
-        status.textContent = "";
-      }
+        }
     });
 
     // ----- 再生終了 -----
@@ -279,7 +220,6 @@ audioPlayers.forEach((container, index) => {
       }
 
       stopButton.style.display = "none";
-      status.textContent = "";
     });
 
     // ----- ページ離脱 -----
@@ -290,7 +230,7 @@ audioPlayers.forEach((container, index) => {
   } else {
     // ----- 音声なし項目 -----
     // Uモードでは資料表示は表示名リンク側に任せる。
-    // 通常モードでは、PDFがあれば ▪️＋表示名 のボタンから開く。
+    // 通常モードでは、PDFがあれば 🔳＋表示名 のボタンから開く。
     if (!isSeparatedMode && pdfUrl) {
       playButton.addEventListener("click", () => {
         window.open(pdfUrl, "_blank");
