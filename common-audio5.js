@@ -51,25 +51,31 @@ audioPlayers.forEach((container, index) => {
   const isSeparatedMode = mode === "U";
 
   // ----- H（Header）モード -----
-  // Hモードも他の項目と同じ「1項目＋項目間余白」で配置する。
-  // 先頭記号・音声ボタン・PDF表示は行わない。
+  // Hモードはタイトルだけを表示し、先頭記号・音声ボタン・PDF表示は行わない。
+  // 項目間隔は通常項目と同じく data-fntsize を確保する。
   if (isHeaderMode) {
     element.style.margin = "0";
     element.style.padding = "0";
     element.style.lineHeight = "1.2";
     element.style.marginBottom =
       index < audioPlayers.length - 1 ? fntsize : "0";
+    element.style.listStyleType = "none";
+
+    // HTML側でH項目が<li>になっている場合のリストマーカーも消す。
+    if (element.parentElement && element.parentElement.tagName === "LI") {
+      element.parentElement.style.listStyleType = "none";
+    }
+
     element.replaceChildren();
 
     const header = document.createElement("span");
     header.textContent = title;
     header.style.fontSize = fntsize;
-    header.style.display = "inline-block";
+    header.style.display = "block";
     header.style.verticalAlign = "middle";
 
     // 文字なしHモードは、文字サイズ1行分だけ高さを確保する。
     if (title === "") {
-      header.style.display = "block";
       header.style.height = fntsize;
     }
 
@@ -133,7 +139,7 @@ audioPlayers.forEach((container, index) => {
   // Uモードでは音声ボタンと表示名を分離
   if (isSeparatedMode) {
     if (isNoAudio) {
-      playButton.textContent = "◾️";
+      playButton.textContent = "▪️";
       playButton.setAttribute("aria-label", `${title} 音声なし`);
       playButton.style.cursor = "default";
     } else {
@@ -141,7 +147,7 @@ audioPlayers.forEach((container, index) => {
       playButton.setAttribute("aria-label", `${title} 音声を再生`);
     }
   } else {
-    playButton.textContent = (isNoAudio ? "◾️" : "🔈 ") + title;
+    playButton.textContent = (isNoAudio ? "▪️" : "🔈 ") + title;
     if (isNoAudio && !pdfUrl) {
       playButton.style.cursor = "default";
     }
@@ -258,7 +264,7 @@ audioPlayers.forEach((container, index) => {
 
         // 一時停止中は停止ボタンを表示したまま
         stopButton.style.display = "inline-block";
-        }
+      }
     });
 
     // ----- 再生終了 -----
