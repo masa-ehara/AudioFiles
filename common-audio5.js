@@ -106,13 +106,6 @@ audioPlayers.forEach((container, index) => {
   element.replaceChildren();
 
   // ----- 音声再生／資料表示ボタン -----
-  // 再生ボタンと停止ボタンを1つのグループにまとめ、
-  // 停止ボタンの表示／非表示で再生ボタンが移動しないようにする。
-  const buttonGroup = document.createElement("span");
-  buttonGroup.style.display = "inline-block";
-  buttonGroup.style.position = "relative";
-  buttonGroup.style.verticalAlign = "middle";
-
   const playButton = document.createElement("button");
   playButton.type = "button";
   playButton.style.fontSize = fntsize;
@@ -184,36 +177,56 @@ audioPlayers.forEach((container, index) => {
       titleLink.removeAttribute("rel");
     }
 
-    element.appendChild(buttonGroup);
+    element.appendChild(playButton);
     element.appendChild(document.createTextNode(" "));
     element.appendChild(titleLink);
   } else {
-    element.appendChild(buttonGroup);
+    element.appendChild(playButton);
   }
 
-  // ----- 停止ボタン -----
-  const stopButton = document.createElement("button");
-  stopButton.type = "button";
-  stopButton.textContent = "⏹️";
-  stopButton.style.fontSize = fntsize;
-  stopButton.style.border = "none";
-  stopButton.style.background = "none";
-  stopButton.style.padding = "0px 2px";
-  stopButton.style.cursor = "pointer";
-  stopButton.style.verticalAlign = "middle";
+  // ----- 停止ボタン用の固定領域 -----
+  // 右端寄せされた外側コンテナのレイアウト計算から見ても、
+  // ⏹️が表示されている時と非表示の時で全体幅が変わらないようにする。
+  // 「見えないだけ」ではなく、⏹️と同サイズの実体のある空白を常時確保する。
+  let stopSlot = null;
+  let stopButton = null;
 
-  // ⏹️は再生ボタンの位置に影響しないよう、ボタングループ内で絶対配置する。
-  // これにより、表示／非表示を切り替えても「説明を聞く」は移動しない。
-  stopButton.style.position = "absolute";
-  stopButton.style.left = "100%";
-  stopButton.style.top = "50%";
-  stopButton.style.transform = "translateY(-50%)";
-  stopButton.style.marginLeft = "4px";
-  stopButton.style.display = "inline-block";
-  stopButton.style.visibility = "hidden";
+  if (!isNoAudio) {
+    stopSlot = document.createElement("span");
+    stopSlot.style.display = "inline-block";
+    stopSlot.style.position = "relative";
+    stopSlot.style.fontSize = fntsize;
+    stopSlot.style.padding = "0px 2px";
+    stopSlot.style.verticalAlign = "middle";
+    stopSlot.style.lineHeight = "1.2";
 
-  buttonGroup.appendChild(playButton);
-  buttonGroup.appendChild(stopButton);
+    // ⏹️と同じ文字を不可視で常時配置し、物理的な幅を確保する。
+    const stopSizer = document.createElement("span");
+    stopSizer.textContent = "⏹️";
+    stopSizer.style.display = "inline-block";
+    stopSizer.style.visibility = "hidden";
+    stopSizer.style.fontSize = fntsize;
+    stopSizer.style.lineHeight = "1.2";
+    stopSlot.appendChild(stopSizer);
+
+    stopButton = document.createElement("button");
+    stopButton.type = "button";
+    stopButton.textContent = "⏹️";
+    stopButton.style.fontSize = fntsize;
+    stopButton.style.border = "none";
+    stopButton.style.background = "none";
+    stopButton.style.padding = "0px 2px";
+    stopButton.style.cursor = "pointer";
+    stopButton.style.verticalAlign = "middle";
+    stopButton.style.position = "absolute";
+    stopButton.style.left = "50%";
+    stopButton.style.top = "50%";
+    stopButton.style.transform = "translate(-50%, -50%)";
+    stopButton.style.display = "none";
+
+    stopSlot.appendChild(stopButton);
+    element.appendChild(stopSlot);
+  }
 
   // ----- 音声あり項目の処理 -----
   if (!isNoAudio && audio) {
@@ -236,7 +249,7 @@ audioPlayers.forEach((container, index) => {
           audio.pause();
         }
       } catch (e) {
-        stopButton.style.visibility = "hidden";
+        stopButton.style.display = "none";
       }
     });
 
@@ -252,7 +265,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopButton.style.visibility = "hidden";
+      stopButton.style.display = "none";
     });
 
     // ----- 再生開始 -----
@@ -264,7 +277,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "⏸️ " + title;
       }
 
-      stopButton.style.visibility = "visible";
+      stopButton.style.display = "inline-block";
     });
 
     // ----- 一時停止 -----
@@ -278,7 +291,7 @@ audioPlayers.forEach((container, index) => {
         }
 
         // 一時停止中は停止ボタンを表示したまま
-        stopButton.style.visibility = "visible";
+        stopButton.style.display = "inline-block";
       }
     });
 
@@ -291,7 +304,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopButton.style.visibility = "hidden";
+      stopButton.style.display = "none";
     });
 
     // ----- ページ離脱 -----
