@@ -106,6 +106,13 @@ audioPlayers.forEach((container, index) => {
   element.replaceChildren();
 
   // ----- 音声再生／資料表示ボタン -----
+  // 再生ボタンと停止ボタンを1つのグループにまとめ、
+  // 停止ボタンの表示／非表示で再生ボタンが移動しないようにする。
+  const buttonGroup = document.createElement("span");
+  buttonGroup.style.display = "inline-block";
+  buttonGroup.style.position = "relative";
+  buttonGroup.style.verticalAlign = "middle";
+
   const playButton = document.createElement("button");
   playButton.type = "button";
   playButton.style.fontSize = fntsize;
@@ -177,11 +184,11 @@ audioPlayers.forEach((container, index) => {
       titleLink.removeAttribute("rel");
     }
 
-    element.appendChild(playButton);
+    element.appendChild(buttonGroup);
     element.appendChild(document.createTextNode(" "));
     element.appendChild(titleLink);
   } else {
-    element.appendChild(playButton);
+    element.appendChild(buttonGroup);
   }
 
   // ----- 停止ボタン -----
@@ -195,13 +202,18 @@ audioPlayers.forEach((container, index) => {
   stopButton.style.cursor = "pointer";
   stopButton.style.verticalAlign = "middle";
 
-  // 初期状態では非表示だが、表示領域は常に確保する。
-  // display:none にすると、再生開始・停止時に⏹️の幅だけ表示位置が移動するため、
-  // visibility:hidden で見えなくする。
+  // ⏹️は再生ボタンの位置に影響しないよう、ボタングループ内で絶対配置する。
+  // これにより、表示／非表示を切り替えても「説明を聞く」は移動しない。
+  stopButton.style.position = "absolute";
+  stopButton.style.left = "100%";
+  stopButton.style.top = "50%";
+  stopButton.style.transform = "translateY(-50%)";
+  stopButton.style.marginLeft = "4px";
   stopButton.style.display = "inline-block";
   stopButton.style.visibility = "hidden";
 
-  element.appendChild(stopButton);
+  buttonGroup.appendChild(playButton);
+  buttonGroup.appendChild(stopButton);
 
   // ----- 音声あり項目の処理 -----
   if (!isNoAudio && audio) {
