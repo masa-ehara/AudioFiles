@@ -53,11 +53,23 @@ audioPlayers.forEach((container, index) => {
   // ----- H（Header）モード -----
   // Hモードはタイトルだけを表示し、先頭記号・音声ボタン・PDF表示は行わない。
   if (isHeaderMode) {
+    element.style.margin = "0";
+    element.style.padding = "0";
+    element.style.lineHeight = "1.2";
+    element.style.marginBottom =
+      index < audioPlayers.length - 1 ? fntsize : "0";
+    element.replaceChildren();
+
     const header = document.createElement("span");
     header.textContent = title;
     header.style.fontSize = fntsize;
-    header.style.display = "inline-block";
+    header.style.display = "block";
     header.style.verticalAlign = "middle";
+
+    if (title === "") {
+      header.style.height = fntsize;
+    }
+
     element.appendChild(header);
     return;
   }
@@ -74,14 +86,11 @@ audioPlayers.forEach((container, index) => {
   // ----- 表示領域 -----
   // 複数項目を1ブロックに入れた場合、
   // 各項目の間隔を文字サイズと同じ値にする。
-  // Google Sites内でボタンが親の行ボックスにクリップされるのを防止。
-  // audio-player自身をブロック要素として扱い、子ボタンの実高さを
-  // 親要素の高さに確実に反映させる。
-  element.style.display = "block";
-  element.style.overflow = "visible";
   element.style.margin = "0";
   element.style.padding = "0";
   element.style.lineHeight = "1.2";
+  element.style.display = "block";
+  element.style.overflow = "visible";
   // 項目間の間隔だけを設定し、最後の項目の下には余白を付けない。
   element.style.marginBottom =
     index < audioPlayers.length - 1 ? fntsize : "0";
