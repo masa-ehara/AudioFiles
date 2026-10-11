@@ -53,14 +53,11 @@ audioPlayers.forEach((container, index) => {
   // ----- H（Header）モード -----
   // Hモードはタイトルだけを表示し、先頭記号・音声ボタン・PDF表示は行わない。
   if (isHeaderMode) {
-    // Hモードも他の項目と同じ「1項目分の高さ＋項目間余白」を確保する。
-    // 特に表示文字が空の場合、空のspanだけでは高さが0になるため、
-    // element側に最小高さを持たせる。
+    element.style.display = "block";
     element.style.margin = "0";
     element.style.padding = "0";
     element.style.lineHeight = "1.2";
-    element.style.display = "block";
-    element.style.minHeight = fntsize;
+    element.style.minHeight = `calc(${fntsize} * 1.5)`;
     element.style.marginBottom =
       index < audioPlayers.length - 1 ? fntsize : "0";
 
@@ -88,10 +85,9 @@ audioPlayers.forEach((container, index) => {
   element.style.margin = "0";
   element.style.padding = "0";
   element.style.lineHeight = "1.2";
-  // Google Sites / iPhone Safari のHTMLブロック内で、
-  // button の実寸が親の行ボックスに負けて上下が切れることを防ぐ。
-  // 通常/Uモードとも生成要素自身をブロック化して高さを確保する。
   element.style.display = "block";
+  element.style.minHeight = `calc(${fntsize} * 2)`;
+  element.style.overflow = "visible";
   // 項目間の間隔だけを設定し、最後の項目の下には余白を付けない。
   element.style.marginBottom =
     index < audioPlayers.length - 1 ? fntsize : "0";
@@ -105,13 +101,11 @@ audioPlayers.forEach((container, index) => {
   playButton.style.fontSize = fntsize;
   playButton.style.padding = "0px 4px";
   playButton.style.verticalAlign = "middle";
-  // iPhone Safariでbuttonの下側が親の行ボックスに隠れないよう、
-  // button自身に行高と実高さを持たせる。
   playButton.style.display = "inline-block";
   playButton.style.boxSizing = "border-box";
   playButton.style.lineHeight = "1.2";
-  playButton.style.height = "auto";
-  playButton.style.minHeight = `calc(${fntsize} * 1.5)`;
+  playButton.style.height = `calc(${fntsize} * 2)`;
+  playButton.style.minHeight = `calc(${fntsize} * 2)`;
   playButton.style.overflow = "visible";
 
   // ===== ボタン枠・背景の扱い =====
@@ -197,8 +191,13 @@ audioPlayers.forEach((container, index) => {
   stopButton.style.cursor = "pointer";
   stopButton.style.verticalAlign = "middle";
 
-  // 初期状態では非表示
-  stopButton.style.display = "none";
+  // 初期状態でも表示領域だけは確保する。
+  // 再生中だけ visibility を visible にすることで、後から⏹️が出現しても
+  // 行の高さ・位置が変わらないようにする。
+  stopButton.style.display = "inline-block";
+  stopButton.style.visibility = "hidden";
+  stopButton.style.height = `calc(${fntsize} * 2)`;
+  stopButton.style.minHeight = `calc(${fntsize} * 2)`;
 
   element.appendChild(stopButton);
 
@@ -229,7 +228,7 @@ audioPlayers.forEach((container, index) => {
         }
       } catch (e) {
         status.textContent = " 音声を再生できませんでした";
-        stopButton.style.display = "none";
+        stopButton.style.visibility = "hidden";
       }
     });
 
@@ -245,7 +244,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopButton.style.display = "none";
+      stopButton.style.visibility = "hidden";
       status.textContent = "";
     });
 
@@ -258,7 +257,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "⏸️ " + title;
       }
 
-      stopButton.style.display = "inline-block";
+      stopButton.style.visibility = "visible";
       status.textContent = "";
     });
 
@@ -273,7 +272,7 @@ audioPlayers.forEach((container, index) => {
         }
 
         // 一時停止中は停止ボタンを表示したまま
-        stopButton.style.display = "inline-block";
+        stopButton.style.visibility = "visible";
         status.textContent = "";
       }
     });
@@ -287,7 +286,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopButton.style.display = "none";
+      stopButton.style.visibility = "hidden";
       status.textContent = "";
     });
 
