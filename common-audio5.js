@@ -20,7 +20,10 @@
 //   音声なし：▪️ ボタン＋表示名
 //             表示名 → data-pdf を新しいタブで開く
 //
-// 【停止ボタン】
+// 【ステータス表示】
+ //   ステータス表示領域は生成しない。
+ //
+ // 【停止ボタン】
 //   初期状態：非表示
 //   音声再生開始：表示
 //   一時停止・再開：表示
@@ -53,21 +56,17 @@ audioPlayers.forEach((container, index) => {
   // ----- H（Header）モード -----
   // Hモードはタイトルだけを表示し、先頭記号・音声ボタン・PDF表示は行わない。
   if (isHeaderMode) {
-    element.style.margin = "0";
-    element.style.padding = "0";
-    element.style.lineHeight = "1.2";
-    element.style.marginBottom =
-      index < audioPlayers.length - 1 ? fntsize : "0";
-    element.replaceChildren();
-
     const header = document.createElement("span");
     header.textContent = title;
     header.style.fontSize = fntsize;
-    header.style.display = "block";
+    header.style.display = "inline-block";
     header.style.verticalAlign = "middle";
 
-    if (title === "") {
-      header.style.height = fntsize;
+    // 表示文字が空のHモードでも、1行分の領域を確保する。
+    if (!title) {
+      header.style.minHeight = fntsize;
+      element.style.minHeight = fntsize;
+      element.style.marginBottom = fntsize;
     }
 
     element.appendChild(header);
@@ -89,8 +88,6 @@ audioPlayers.forEach((container, index) => {
   element.style.margin = "0";
   element.style.padding = "0";
   element.style.lineHeight = "1.2";
-  element.style.display = "block";
-  element.style.overflow = "visible";
   // 項目間の間隔だけを設定し、最後の項目の下には余白を付けない。
   element.style.marginBottom =
     index < audioPlayers.length - 1 ? fntsize : "0";
@@ -188,15 +185,13 @@ audioPlayers.forEach((container, index) => {
   stopButton.style.cursor = "pointer";
   stopButton.style.verticalAlign = "middle";
 
-  // 初期状態では非表示
-  stopButton.style.display = "none";
+  // 初期状態では非表示だが、表示領域は確保する。
+  // Google Sites / iPhone Safari で行ボックスの高さが縮み、
+  // 音声ボタンが上下方向に欠けるのを防止する。
+  stopButton.style.visibility = "hidden";
+  stopButton.style.display = "inline-block";
 
   element.appendChild(stopButton);
-
-  // ----- ステータス -----
-  const status = document.createElement("span");
-  status.textContent = "";
-  element.appendChild(status);
 
   // ----- 音声あり項目の処理 -----
   if (!isNoAudio && audio) {
@@ -219,8 +214,7 @@ audioPlayers.forEach((container, index) => {
           audio.pause();
         }
       } catch (e) {
-        status.textContent = " 音声を再生できませんでした";
-        stopButton.style.display = "none";
+        stopButton.style.visibility = "hidden";
       }
     });
 
@@ -236,8 +230,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopButton.style.display = "none";
-      status.textContent = "";
+      stopButton.style.visibility = "hidden";
     });
 
     // ----- 再生開始 -----
@@ -249,8 +242,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "⏸️ " + title;
       }
 
-      stopButton.style.display = "inline-block";
-      status.textContent = "";
+      stopButton.style.visibility = "visible";
     });
 
     // ----- 一時停止 -----
@@ -264,9 +256,8 @@ audioPlayers.forEach((container, index) => {
         }
 
         // 一時停止中は停止ボタンを表示したまま
-        stopButton.style.display = "inline-block";
-        status.textContent = "";
-      }
+        stopButton.style.visibility = "visible";
+        }
     });
 
     // ----- 再生終了 -----
@@ -278,8 +269,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopButton.style.display = "none";
-      status.textContent = "";
+      stopButton.style.visibility = "hidden";
     });
 
     // ----- ページ離脱 -----
