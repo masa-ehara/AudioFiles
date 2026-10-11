@@ -74,6 +74,11 @@ audioPlayers.forEach((container, index) => {
   // ----- 表示領域 -----
   // 複数項目を1ブロックに入れた場合、
   // 各項目の間隔を文字サイズと同じ値にする。
+  // Google Sites内でボタンが親の行ボックスにクリップされるのを防止。
+  // audio-player自身をブロック要素として扱い、子ボタンの実高さを
+  // 親要素の高さに確実に反映させる。
+  element.style.display = "block";
+  element.style.overflow = "visible";
   element.style.margin = "0";
   element.style.padding = "0";
   element.style.lineHeight = "1.2";
@@ -205,6 +210,7 @@ audioPlayers.forEach((container, index) => {
           audio.pause();
         }
       } catch (e) {
+        status.textContent = " 音声を再生できませんでした";
         stopButton.style.display = "none";
       }
     });
@@ -222,6 +228,7 @@ audioPlayers.forEach((container, index) => {
       }
 
       stopButton.style.display = "none";
+      status.textContent = "";
     });
 
     // ----- 再生開始 -----
@@ -234,6 +241,7 @@ audioPlayers.forEach((container, index) => {
       }
 
       stopButton.style.display = "inline-block";
+      status.textContent = "";
     });
 
     // ----- 一時停止 -----
@@ -248,7 +256,8 @@ audioPlayers.forEach((container, index) => {
 
         // 一時停止中は停止ボタンを表示したまま
         stopButton.style.display = "inline-block";
-        }
+        status.textContent = "";
+      }
     });
 
     // ----- 再生終了 -----
@@ -261,6 +270,7 @@ audioPlayers.forEach((container, index) => {
       }
 
       stopButton.style.display = "none";
+      status.textContent = "";
     });
 
     // ----- ページ離脱 -----
