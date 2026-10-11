@@ -20,10 +20,7 @@
 //   音声なし：▪️ ボタン＋表示名
 //             表示名 → data-pdf を新しいタブで開く
 //
-// 【ステータス表示】
- //   ステータス表示領域は生成しない。
- //
- // 【停止ボタン】
+// 【停止ボタン】
 //   初期状態：非表示
 //   音声再生開始：表示
 //   一時停止・再開：表示
@@ -56,15 +53,22 @@ audioPlayers.forEach((container, index) => {
   // ----- H（Header）モード -----
   // Hモードはタイトルだけを表示し、先頭記号・音声ボタン・PDF表示は行わない。
   if (isHeaderMode) {
+    // Hモードも他の項目と同じ「1項目分の高さ＋項目間余白」を確保する。
+    // 特に表示文字が空の場合、空のspanだけでは高さが0になるため、
+    // element側に最小高さを持たせる。
+    element.style.margin = "0";
+    element.style.padding = "0";
+    element.style.lineHeight = "1.2";
+    element.style.display = "block";
+    element.style.minHeight = fntsize;
+    element.style.marginBottom =
+      index < audioPlayers.length - 1 ? fntsize : "0";
+
     const header = document.createElement("span");
     header.textContent = title;
     header.style.fontSize = fntsize;
     header.style.display = "inline-block";
     header.style.verticalAlign = "middle";
-    if (!title) {
-      header.style.minHeight = fntsize;
-      header.style.lineHeight = "1.2";
-    }
     element.appendChild(header);
     return;
   }
@@ -84,6 +88,10 @@ audioPlayers.forEach((container, index) => {
   element.style.margin = "0";
   element.style.padding = "0";
   element.style.lineHeight = "1.2";
+  // Google Sites / iPhone Safari のHTMLブロック内で、
+  // button の実寸が親の行ボックスに負けて上下が切れることを防ぐ。
+  // 通常/Uモードとも生成要素自身をブロック化して高さを確保する。
+  element.style.display = "block";
   // 項目間の間隔だけを設定し、最後の項目の下には余白を付けない。
   element.style.marginBottom =
     index < audioPlayers.length - 1 ? fntsize : "0";
@@ -97,9 +105,14 @@ audioPlayers.forEach((container, index) => {
   playButton.style.fontSize = fntsize;
   playButton.style.padding = "0px 4px";
   playButton.style.verticalAlign = "middle";
+  // iPhone Safariでbuttonの下側が親の行ボックスに隠れないよう、
+  // button自身に行高と実高さを持たせる。
   playButton.style.display = "inline-block";
-  playButton.style.lineHeight = "normal";
-  playButton.style.minHeight = "1.5em";
+  playButton.style.boxSizing = "border-box";
+  playButton.style.lineHeight = "1.2";
+  playButton.style.height = "auto";
+  playButton.style.minHeight = `calc(${fntsize} * 1.5)`;
+  playButton.style.overflow = "visible";
 
   // ===== ボタン枠・背景の扱い =====
   // 通常モード＋音声ありだけ、外枠＋グレー背景を表示。
@@ -184,13 +197,15 @@ audioPlayers.forEach((container, index) => {
   stopButton.style.cursor = "pointer";
   stopButton.style.verticalAlign = "middle";
 
-  // 初期状態でも表示領域は確保する。
-  // visibility:hidden ならレイアウト上の幅・高さを保持したまま、
-  // iPhone / Google Sites の行折返し時にも次行へ落ちにくくなる。
-  stopButton.style.display = "inline-block";
-  stopButton.style.visibility = "hidden";
+  // 初期状態では非表示
+  stopButton.style.display = "none";
 
   element.appendChild(stopButton);
+
+  // ----- ステータス -----
+  const status = document.createElement("span");
+  status.textContent = "";
+  element.appendChild(status);
 
   // ----- 音声あり項目の処理 -----
   if (!isNoAudio && audio) {
@@ -213,7 +228,8 @@ audioPlayers.forEach((container, index) => {
           audio.pause();
         }
       } catch (e) {
-        stopButton.style.visibility = "hidden";
+        status.textContent = " 音声を再生できませんでした";
+        stopButton.style.display = "none";
       }
     });
 
@@ -229,7 +245,8 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopButton.style.visibility = "hidden";
+      stopButton.style.display = "none";
+      status.textContent = "";
     });
 
     // ----- 再生開始 -----
@@ -242,7 +259,7 @@ audioPlayers.forEach((container, index) => {
       }
 
       stopButton.style.display = "inline-block";
-      stopButton.style.visibility = "visible";
+      status.textContent = "";
     });
 
     // ----- 一時停止 -----
@@ -257,8 +274,8 @@ audioPlayers.forEach((container, index) => {
 
         // 一時停止中は停止ボタンを表示したまま
         stopButton.style.display = "inline-block";
-      stopButton.style.visibility = "visible";
-        }
+        status.textContent = "";
+      }
     });
 
     // ----- 再生終了 -----
@@ -270,7 +287,8 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopButton.style.visibility = "hidden";
+      stopButton.style.display = "none";
+      status.textContent = "";
     });
 
     // ----- ページ離脱 -----
