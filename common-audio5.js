@@ -53,14 +53,6 @@ audioPlayers.forEach((container, index) => {
   // ----- H（Header）モード -----
   // Hモードはタイトルだけを表示し、先頭記号・音声ボタン・PDF表示は行わない。
   if (isHeaderMode) {
-    element.style.display = "block";
-    element.style.margin = "0";
-    element.style.padding = "0";
-    element.style.lineHeight = "1.2";
-    element.style.minHeight = `calc(${fntsize} * 1.5)`;
-    element.style.marginBottom =
-      index < audioPlayers.length - 1 ? fntsize : "0";
-
     const header = document.createElement("span");
     header.textContent = title;
     header.style.fontSize = fntsize;
@@ -80,19 +72,8 @@ audioPlayers.forEach((container, index) => {
   }
 
   // ----- 表示領域 -----
-  // 複数項目を1ブロックに入れた場合、
-  // 各項目の間隔を文字サイズと同じ値にする。
-  element.style.margin = "0";
-  element.style.padding = "0";
-  element.style.lineHeight = "1.2";
-  element.style.display = "block";
-  element.style.minHeight = `calc(${fntsize} * 3)`;
-  element.style.paddingBottom = `calc(${fntsize} * 2)`;
-  element.style.boxSizing = "border-box";
-  element.style.overflow = "visible";
-  // 項目間の間隔だけを設定し、最後の項目の下には余白を付けない。
-  element.style.marginBottom =
-    index < audioPlayers.length - 1 ? fntsize : "0";
+  // Google Sites側のレイアウト計算を優先するため、
+  // コンテナの margin / padding / line-height / margin-bottom は変更しない。
 
   // 既存HTMLから生成物が二重になるのを防止
   element.replaceChildren();
@@ -103,10 +84,6 @@ audioPlayers.forEach((container, index) => {
   playButton.style.fontSize = fntsize;
   playButton.style.padding = "0px 4px";
   playButton.style.verticalAlign = "middle";
-  playButton.style.display = "inline-block";
-  playButton.style.boxSizing = "border-box";
-  playButton.style.lineHeight = "1.2";
-  playButton.style.overflow = "visible";
 
   // ===== ボタン枠・背景の扱い =====
   // 通常モード＋音声ありだけ、外枠＋グレー背景を表示。
@@ -191,13 +168,15 @@ audioPlayers.forEach((container, index) => {
   stopButton.style.cursor = "pointer";
   stopButton.style.verticalAlign = "middle";
 
-  // 初期状態でも表示領域だけは確保する。
-  // 再生中だけ visibility を visible にすることで、後から⏹️が出現しても
-  // 行の高さ・位置が変わらないようにする。
-  stopButton.style.display = "inline-block";
-  stopButton.style.visibility = "hidden";
+  // 初期状態では非表示
+  stopButton.style.display = "none";
 
   element.appendChild(stopButton);
+
+  // ----- ステータス -----
+  const status = document.createElement("span");
+  status.textContent = "";
+  element.appendChild(status);
 
   // ----- 音声あり項目の処理 -----
   if (!isNoAudio && audio) {
@@ -220,7 +199,8 @@ audioPlayers.forEach((container, index) => {
           audio.pause();
         }
       } catch (e) {
-        stopButton.style.visibility = "hidden";
+        status.textContent = " 音声を再生できませんでした";
+        stopButton.style.display = "none";
       }
     });
 
@@ -236,7 +216,8 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopButton.style.visibility = "hidden";
+      stopButton.style.display = "none";
+      status.textContent = "";
     });
 
     // ----- 再生開始 -----
@@ -248,7 +229,8 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "⏸️ " + title;
       }
 
-      stopButton.style.visibility = "visible";
+      stopButton.style.display = "inline-block";
+      status.textContent = "";
     });
 
     // ----- 一時停止 -----
@@ -262,7 +244,8 @@ audioPlayers.forEach((container, index) => {
         }
 
         // 一時停止中は停止ボタンを表示したまま
-        stopButton.style.visibility = "visible";
+        stopButton.style.display = "inline-block";
+        status.textContent = "";
       }
     });
 
@@ -275,7 +258,8 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopButton.style.visibility = "hidden";
+      stopButton.style.display = "none";
+      status.textContent = "";
     });
 
     // ----- ページ離脱 -----
@@ -293,16 +277,4 @@ audioPlayers.forEach((container, index) => {
       });
     }
   }
-});
-
-
-// Google Sites の埋め込みHTMLは、外部JSで生成した要素の高さを
-// 初回計算後に再取得しない場合があるため、最終的な高さを反映させる。
-requestAnimationFrame(() => {
-  document.body.style.minHeight = `${document.body.scrollHeight}px`;
-  window.dispatchEvent(new Event("resize"));
-  setTimeout(() => {
-    document.body.style.minHeight = `${document.body.scrollHeight}px`;
-    window.dispatchEvent(new Event("resize"));
-  }, 100);
 });
