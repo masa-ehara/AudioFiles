@@ -184,49 +184,22 @@ audioPlayers.forEach((container, index) => {
     element.appendChild(playButton);
   }
 
-  // ----- 停止ボタン用の固定領域 -----
-  // 右端寄せされた外側コンテナのレイアウト計算から見ても、
-  // ⏹️が表示されている時と非表示の時で全体幅が変わらないようにする。
-  // 「見えないだけ」ではなく、⏹️と同サイズの実体のある空白を常時確保する。
-  let stopSlot = null;
-  let stopButton = null;
+  // ----- 停止ボタン／同幅スペース -----
+  // ⏹️が表示されていない時も、同じ幅の空白を常時確保する。
+  // 外側が「右端寄せ」の場合でも、表示／非表示で全体幅が変わらないようにする。
+  // 音声なし項目では、従来どおり停止領域そのものを作らない。
+  const stopSpace = document.createElement("span");
+  stopSpace.textContent = "⏹️";
+  stopSpace.style.fontSize = fntsize;
+  stopSpace.style.padding = "0px 2px";
+  stopSpace.style.cursor = "pointer";
+  stopSpace.style.verticalAlign = "middle";
+  stopSpace.style.display = isNoAudio ? "none" : "inline-block";
+  stopSpace.style.visibility = "hidden";
+  stopSpace.setAttribute("role", "button");
+  stopSpace.setAttribute("aria-label", `${title} 音声を停止`);
 
-  if (!isNoAudio) {
-    stopSlot = document.createElement("span");
-    stopSlot.style.display = "inline-block";
-    stopSlot.style.position = "relative";
-    stopSlot.style.fontSize = fntsize;
-    stopSlot.style.padding = "0px 2px";
-    stopSlot.style.verticalAlign = "middle";
-    stopSlot.style.lineHeight = "1.2";
-
-    // ⏹️と同じ文字を不可視で常時配置し、物理的な幅を確保する。
-    const stopSizer = document.createElement("span");
-    stopSizer.textContent = "⏹️";
-    stopSizer.style.display = "inline-block";
-    stopSizer.style.visibility = "hidden";
-    stopSizer.style.fontSize = fntsize;
-    stopSizer.style.lineHeight = "1.2";
-    stopSlot.appendChild(stopSizer);
-
-    stopButton = document.createElement("button");
-    stopButton.type = "button";
-    stopButton.textContent = "⏹️";
-    stopButton.style.fontSize = fntsize;
-    stopButton.style.border = "none";
-    stopButton.style.background = "none";
-    stopButton.style.padding = "0px 2px";
-    stopButton.style.cursor = "pointer";
-    stopButton.style.verticalAlign = "middle";
-    stopButton.style.position = "absolute";
-    stopButton.style.left = "50%";
-    stopButton.style.top = "50%";
-    stopButton.style.transform = "translate(-50%, -50%)";
-    stopButton.style.display = "none";
-
-    stopSlot.appendChild(stopButton);
-    element.appendChild(stopSlot);
-  }
+  element.appendChild(stopSpace);
 
   // ----- 音声あり項目の処理 -----
   if (!isNoAudio && audio) {
@@ -249,12 +222,12 @@ audioPlayers.forEach((container, index) => {
           audio.pause();
         }
       } catch (e) {
-        stopButton.style.display = "none";
+        stopSpace.style.visibility = "hidden";
       }
     });
 
     // ----- 停止 -----
-    stopButton.addEventListener("click", () => {
+    stopSpace.addEventListener("click", () => {
       audio.pause();
       audio.currentTime = 0;
 
@@ -265,7 +238,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopButton.style.display = "none";
+      stopSpace.style.visibility = "hidden";
     });
 
     // ----- 再生開始 -----
@@ -277,7 +250,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "⏸️ " + title;
       }
 
-      stopButton.style.display = "inline-block";
+      stopSpace.style.visibility = "visible";
     });
 
     // ----- 一時停止 -----
@@ -291,7 +264,7 @@ audioPlayers.forEach((container, index) => {
         }
 
         // 一時停止中は停止ボタンを表示したまま
-        stopButton.style.display = "inline-block";
+        stopSpace.style.visibility = "visible";
       }
     });
 
@@ -304,7 +277,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopButton.style.display = "none";
+      stopSpace.style.visibility = "hidden";
     });
 
     // ----- ページ離脱 -----
