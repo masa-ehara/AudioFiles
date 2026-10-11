@@ -20,10 +20,7 @@
 //   音声なし：▪️ ボタン＋表示名
 //             表示名 → data-pdf を新しいタブで開く
 //
-// 【ステータス表示】
- //   ステータス表示領域は生成しない。
- //
- // 【停止ボタン】
+// 【停止ボタン】
 //   初期状態：非表示
 //   音声再生開始：表示
 //   一時停止・再開：表示
@@ -181,6 +178,11 @@ audioPlayers.forEach((container, index) => {
   stopButton.style.display = "none";
 
   element.appendChild(stopButton);
+
+  // ----- ステータス -----
+  const status = document.createElement("span");
+  status.textContent = "";
+  element.appendChild(status);
 
   // ----- 音声あり項目の処理 -----
   if (!isNoAudio && audio) {
