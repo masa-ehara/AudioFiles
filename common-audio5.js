@@ -86,7 +86,9 @@ audioPlayers.forEach((container, index) => {
   element.style.padding = "0";
   element.style.lineHeight = "1.2";
   element.style.display = "block";
-  element.style.minHeight = `calc(${fntsize} * 2)`;
+  element.style.minHeight = `calc(${fntsize} * 3)`;
+  element.style.paddingBottom = `calc(${fntsize} * 2)`;
+  element.style.boxSizing = "border-box";
   element.style.overflow = "visible";
   // 項目間の間隔だけを設定し、最後の項目の下には余白を付けない。
   element.style.marginBottom =
@@ -104,8 +106,6 @@ audioPlayers.forEach((container, index) => {
   playButton.style.display = "inline-block";
   playButton.style.boxSizing = "border-box";
   playButton.style.lineHeight = "1.2";
-  playButton.style.height = `calc(${fntsize} * 2)`;
-  playButton.style.minHeight = `calc(${fntsize} * 2)`;
   playButton.style.overflow = "visible";
 
   // ===== ボタン枠・背景の扱い =====
@@ -196,15 +196,8 @@ audioPlayers.forEach((container, index) => {
   // 行の高さ・位置が変わらないようにする。
   stopButton.style.display = "inline-block";
   stopButton.style.visibility = "hidden";
-  stopButton.style.height = `calc(${fntsize} * 2)`;
-  stopButton.style.minHeight = `calc(${fntsize} * 2)`;
 
   element.appendChild(stopButton);
-
-  // ----- ステータス -----
-  const status = document.createElement("span");
-  status.textContent = "";
-  element.appendChild(status);
 
   // ----- 音声あり項目の処理 -----
   if (!isNoAudio && audio) {
@@ -227,7 +220,6 @@ audioPlayers.forEach((container, index) => {
           audio.pause();
         }
       } catch (e) {
-        status.textContent = " 音声を再生できませんでした";
         stopButton.style.visibility = "hidden";
       }
     });
@@ -245,7 +237,6 @@ audioPlayers.forEach((container, index) => {
       }
 
       stopButton.style.visibility = "hidden";
-      status.textContent = "";
     });
 
     // ----- 再生開始 -----
@@ -258,7 +249,6 @@ audioPlayers.forEach((container, index) => {
       }
 
       stopButton.style.visibility = "visible";
-      status.textContent = "";
     });
 
     // ----- 一時停止 -----
@@ -273,7 +263,6 @@ audioPlayers.forEach((container, index) => {
 
         // 一時停止中は停止ボタンを表示したまま
         stopButton.style.visibility = "visible";
-        status.textContent = "";
       }
     });
 
@@ -287,7 +276,6 @@ audioPlayers.forEach((container, index) => {
       }
 
       stopButton.style.visibility = "hidden";
-      status.textContent = "";
     });
 
     // ----- ページ離脱 -----
@@ -305,4 +293,16 @@ audioPlayers.forEach((container, index) => {
       });
     }
   }
+});
+
+
+// Google Sites の埋め込みHTMLは、外部JSで生成した要素の高さを
+// 初回計算後に再取得しない場合があるため、最終的な高さを反映させる。
+requestAnimationFrame(() => {
+  document.body.style.minHeight = `${document.body.scrollHeight}px`;
+  window.dispatchEvent(new Event("resize"));
+  setTimeout(() => {
+    document.body.style.minHeight = `${document.body.scrollHeight}px`;
+    window.dispatchEvent(new Event("resize"));
+  }, 100);
 });
