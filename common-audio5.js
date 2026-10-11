@@ -128,22 +128,44 @@ audioPlayers.forEach((container, index) => {
   }
 
   // ----- 停止ボタン -----
-  const stopButton = document.createElement("button");
-  stopButton.type = "button";
-  stopButton.textContent = "⏹️";
-  stopButton.style.fontSize = fntsize;
-  stopButton.style.border = "none";
-  stopButton.style.background = "none";
-  stopButton.style.padding = "0px 2px";
-  stopButton.style.cursor = "pointer";
-  stopButton.style.verticalAlign = "middle";
+  // 初期状態ではDOMに生成しません。
+  // Google Sites側で非表示要素の領域が確保されることを防ぎます。
+  let stopButton = null;
 
-  // 初期状態では非表示
-  stopButton.style.display = "none";
+  const createStopButton = () => {
+    if (stopButton) return;
 
-  element.appendChild(stopButton);
+    stopButton = document.createElement("button");
+    stopButton.type = "button";
+    stopButton.textContent = "⏹️";
+    stopButton.style.fontSize = fntsize;
+    stopButton.style.border = "none";
+    stopButton.style.background = "none";
+    stopButton.style.padding = "0px 2px";
+    stopButton.style.cursor = "pointer";
+    stopButton.style.verticalAlign = "middle";
 
-    // ----- 音声あり項目の処理 -----
+    stopButton.addEventListener("click", () => {
+      if (!audio) return;
+
+      audio.pause();
+      audio.currentTime = 0;
+
+      if (isSeparatedMode) {
+        playButton.textContent = "🔈";
+        playButton.setAttribute("aria-label", `${title} 音声を再生`);
+      } else {
+        playButton.textContent = "🔈 " + title;
+      }
+
+      stopButton.remove();
+      stopButton = null;
+    });
+
+    element.appendChild(stopButton);
+  };
+
+  // ----- 音声あり項目の処理 -----
   if (!isNoAudio && audio) {
     playButton.addEventListener("click", async () => {
       try {
@@ -164,23 +186,11 @@ audioPlayers.forEach((container, index) => {
           audio.pause();
         }
       } catch (e) {
-        stopButton.style.display = "none";
+        if (stopButton) {
+          stopButton.remove();
+          stopButton = null;
+        }
       }
-    });
-
-    // ----- 停止 -----
-    stopButton.addEventListener("click", () => {
-      audio.pause();
-      audio.currentTime = 0;
-
-      if (isSeparatedMode) {
-        playButton.textContent = "🔈";
-        playButton.setAttribute("aria-label", `${title} 音声を再生`);
-      } else {
-        playButton.textContent = "🔈 " + title;
-      }
-
-      stopButton.style.display = "none";
     });
 
     // ----- 再生開始 -----
@@ -192,7 +202,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "⏸️ " + title;
       }
 
-      stopButton.style.display = "inline-block";
+      createStopButton();
     });
 
     // ----- 一時停止 -----
@@ -206,7 +216,7 @@ audioPlayers.forEach((container, index) => {
         }
 
         // 一時停止中は停止ボタンを表示したまま
-        stopButton.style.display = "inline-block";
+        createStopButton();
         }
     });
 
@@ -219,7 +229,10 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopButton.style.display = "none";
+      if (stopButton) {
+        stopButton.remove();
+        stopButton = null;
+      }
     });
 
     // ----- ページ離脱 -----
