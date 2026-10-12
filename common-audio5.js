@@ -20,10 +20,16 @@
 //   音声なし：▪️ ボタン＋表示名
 //             表示名 → data-pdf を新しいタブで開く
 //
+// 【再生状態表示】
+//   再生中：⏸️
+//   一時停止中：▶️（押すと一時停止位置から再開）
+//   完全停止／再生終了：🔈（押すと最初から再生）
+//
 // 【停止ボタン】
 //   初期状態：非表示
 //   音声再生開始：表示
-//   一時停止・再開：表示
+//   一時停止：非表示
+//   再開：表示
 //   停止：非表示
 //   再生終了：非表示
 //
@@ -203,6 +209,9 @@ audioPlayers.forEach((container, index) => {
 
   // ----- 音声あり項目の処理 -----
   if (!isNoAudio && audio) {
+    // ⏹️による完全停止と通常の一時停止を区別するためのフラグ。
+    let isStopping = false;
+
     playButton.addEventListener("click", async () => {
       try {
         if (audio.paused || audio.ended) {
@@ -228,6 +237,8 @@ audioPlayers.forEach((container, index) => {
 
     // ----- 停止 -----
     stopSpace.addEventListener("click", () => {
+      // ⏹️による停止と、⏸️による一時停止を区別する。
+      isStopping = true;
       audio.pause();
       audio.currentTime = 0;
 
@@ -239,6 +250,7 @@ audioPlayers.forEach((container, index) => {
       }
 
       stopSpace.style.visibility = "hidden";
+      isStopping = false;
     });
 
     // ----- 再生開始 -----
@@ -255,18 +267,18 @@ audioPlayers.forEach((container, index) => {
 
     // ----- 一時停止 -----
     audio.addEventListener("pause", () => {
-      if (!audio.ended) {
+      // ⏹️による完全停止ではなく、通常の一時停止の場合だけ
+      // 「▶️＝一時停止位置から再開」を表示する。
+      if (!audio.ended && !isStopping) {
         if (isSeparatedMode) {
-          playButton.textContent = "🔈";
-          playButton.setAttribute("aria-label", `${title} 音声を再生`);
+          playButton.textContent = "▶️";
+          playButton.setAttribute("aria-label", `${title} 音声を再開`);
         } else {
-          playButton.textContent = "🔈 " + title;
+          playButton.textContent = "▶️ " + title;
         }
 
-        // 一時停止中は停止ボタンを表示したまま
-        // stopSpace.style.visibility = "visible";
+        // 一時停止中は停止ボタンを非表示。
         stopSpace.style.visibility = "hidden";
-
       }
     });
 
