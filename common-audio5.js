@@ -264,7 +264,9 @@ audioPlayers.forEach((container, index) => {
         }
 
         // 一時停止中は停止ボタンを表示したまま
-        stopSpace.style.visibility = "visible";
+        // stopSpace.style.visibility = "visible";
+        stopSpace.style.visibility = "hidden";
+
       }
     });
 
