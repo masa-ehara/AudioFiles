@@ -250,7 +250,9 @@ audioPlayers.forEach((container, index) => {
       }
 
       stopSpace.style.visibility = "hidden";
-      isStopping = false;
+      // isStopping は pause イベント側で解除する。
+      // audio.pause() の pause イベントが非同期で発生する環境でも、
+      // ⏹️による停止を確実に判別できるようにする。
     });
 
     // ----- 再生開始 -----
@@ -267,9 +269,23 @@ audioPlayers.forEach((container, index) => {
 
     // ----- 一時停止 -----
     audio.addEventListener("pause", () => {
-      // ⏹️による完全停止ではなく、通常の一時停止の場合だけ
-      // 「▶️＝一時停止位置から再開」を表示する。
-      if (!audio.ended && !isStopping) {
+      // ⏹️による完全停止の場合は、🔈（先頭から再生）に戻す。
+      // pause イベントの発生タイミングにかかわらず、
+      // isStopping が true の間は ▶️ に変更しない。
+      if (isStopping) {
+        if (isSeparatedMode) {
+          playButton.textContent = "🔈";
+          playButton.setAttribute("aria-label", `${title} 音声を再生`);
+        } else {
+          playButton.textContent = "🔈 " + title;
+        }
+        stopSpace.style.visibility = "hidden";
+        isStopping = false;
+        return;
+      }
+
+      // 通常の一時停止なら「▶️＝一時停止位置から再開」を表示。
+      if (!audio.ended) {
         if (isSeparatedMode) {
           playButton.textContent = "▶️";
           playButton.setAttribute("aria-label", `${title} 音声を再開`);
