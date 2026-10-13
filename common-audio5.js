@@ -55,30 +55,54 @@ const isMacEnvironment =
 // iPhone / iPad：現在のWindowで表示
 function openPdf(pdfUrl) {
   if (isMacEnvironment) {
-    // PDF Windowは「現在のWindowの右上から、右上方向へはみ出す」
-    // 配置にする。ユーザーが示したイメージに合わせ、
-    // 元Windowの右端付近から大きく重ねつつ、右側へはみ出させる。
-    const popupWidth = 1100;
-    const popupHeight = 900;
+    // 現在の元Windowを基準に、右上方向へPDF Windowを
+    // 「はみ出させて」表示する。
+    //
+    // 重要：
+    // left / top は画面右上からの固定値ではなく、
+    // 現在Windowの screenX / screenY / outerWidth から計算する。
+    // さらに moveTo() を使って、ブラウザが初期配置を変更した場合も
+    // もう一度相対位置へ移動させる。
+    const popupWidth = 1000;
+    const popupHeight = 800;
 
     const currentLeft = window.screenX ?? window.screenLeft ?? 0;
     const currentTop = window.screenY ?? window.screenTop ?? 0;
     const currentWidth = window.outerWidth || window.innerWidth || 1200;
 
-    // 元Windowの右端から約300px右へはみ出し、
-    // 上端から約140px上へはみ出すイメージ。
-    // そのため左位置は「元Window右端 - 800px」。
-    const left = currentLeft + currentWidth - 800;
-    const top = currentTop - 140;
+    const currentRight = currentLeft + currentWidth;
 
-    return window.open(
+    // 元Windowの右端から約750px左をPDF Windowの左端とする。
+    // その結果、PDF Windowは元Windowと大きく重なりながら、
+    // 右側へ約250pxはみ出す。
+    const left = Math.round(currentRight - 750);
+
+    // 元Windowの上端より約150px上へ。
+    const top = Math.round(currentTop - 150);
+
+    const popup = window.open(
       pdfUrl,
       "pdfWindow",
       `popup=yes,width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
+
+    if (popup) {
+      // ブラウザが初期配置を補正した場合に備えて、
+      // 少し遅らせて相対位置を再指定する。
+      setTimeout(() => {
+        try {
+          popup.moveTo(left, top);
+          popup.resizeTo(popupWidth, popupHeight);
+        } catch (e) {
+          // ブラウザがWindow位置変更を禁止している場合は何もしない。
+        }
+      }, 100);
+    }
+
+    return popup;
   }
 
-  // iPhone / iPad は従来動作に戻す。
+  // iPhone / iPad は従来動作を維持する。
   // window.location.href は Google Sites / Drive で403になる場合があるため使用しない。
   return window.open(pdfUrl, "_blank");
 }
