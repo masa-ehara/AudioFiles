@@ -225,7 +225,12 @@ audioPlayers.forEach((container, index) => {
           // 音声ボタンのクリックで資料も開く。
           // Uモードでは資料表示を行わない。
           if (!isSeparatedMode && pdfUrl) {
-            window.open(pdfUrl, "_blank");
+            //window.open(pdfUrl, "_blank");
+            window.open(
+              pdfUrl,
+              "pdfWindow",
+              "popup=yes,width=1200,height=900,resizable=yes,scrollbars=yes"
+            );
           }
         } else {
           audio.pause();
@@ -321,7 +326,12 @@ audioPlayers.forEach((container, index) => {
     // 通常モードでは、PDFがあれば ▪️＋表示名 のボタンから開く。
     if (!isSeparatedMode && pdfUrl) {
       playButton.addEventListener("click", () => {
-        window.open(pdfUrl, "_blank");
+            //window.open(pdfUrl, "_blank");
+            window.open(
+              pdfUrl,
+              "pdfWindow",
+              "popup=yes,width=1200,height=900,resizable=yes,scrollbars=yes"
+            );
       });
     }
   }
