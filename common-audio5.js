@@ -40,7 +40,7 @@
 
 const AUDIO_BASE_URL = "https://masa-ehara.github.io/AudioFiles/";
 // 共通スクリプトの更新版番号（HTML側のscript URLにも ?v=20261013-3 を付ける）
-const COMMON_AUDIO_VERSION = "20261013-3";
+const COMMON_AUDIO_VERSION = "20261013-5";
 
 // ----- 実行環境判定 -----
 // Macだけ新しいWindowでPDFを開く。
@@ -55,24 +55,21 @@ const isMacEnvironment =
 // iPhone / iPad：現在のWindowで表示
 function openPdf(pdfUrl) {
   if (isMacEnvironment) {
-    // PDF Windowは「画面の右上」に配置する。
-    // 元Windowと重なり過ぎないよう、サイズも少し小さくする。
-    // ブラウザによってはleft/top指定が制限されるため、
-    // 現在Window基準ではなく、利用可能な画面領域の右上を基準にする。
-    const popupWidth = 1000;
-    const popupHeight = 800;
-    const margin = 20;
+    // PDF Windowは「現在のWindowの右上から、右上方向へはみ出す」
+    // 配置にする。ユーザーが示したイメージに合わせ、
+    // 元Windowの右端付近から大きく重ねつつ、右側へはみ出させる。
+    const popupWidth = 1100;
+    const popupHeight = 900;
 
-    const screenLeft = window.screen.availLeft ?? 0;
-    const screenTop = window.screen.availTop ?? 0;
-    const screenWidth = window.screen.availWidth || window.screen.width;
-    const screenHeight = window.screen.availHeight || window.screen.height;
+    const currentLeft = window.screenX ?? window.screenLeft ?? 0;
+    const currentTop = window.screenY ?? window.screenTop ?? 0;
+    const currentWidth = window.outerWidth || window.innerWidth || 1200;
 
-    const left = Math.max(
-      screenLeft,
-      screenLeft + screenWidth - popupWidth - margin
-    );
-    const top = Math.max(screenTop, screenTop + margin);
+    // 元Windowの右端から約300px右へはみ出し、
+    // 上端から約140px上へはみ出すイメージ。
+    // そのため左位置は「元Window右端 - 800px」。
+    const left = currentLeft + currentWidth - 800;
+    const top = currentTop - 140;
 
     return window.open(
       pdfUrl,
