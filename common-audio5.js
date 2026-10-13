@@ -162,31 +162,34 @@ audioPlayers.forEach((container, index) => {
   // ----- 表示名 -----
   let titleLink = null;
 
-  if (isSeparatedMode) {
-    titleLink = document.createElement("a");
-    titleLink.textContent = title;
-    titleLink.href = pdfUrl || "#";
-    titleLink.target = "_blank";
-    titleLink.rel = "noopener noreferrer";
-    titleLink.style.fontSize = fntsize;
-    titleLink.style.color = "#06c";
-    titleLink.style.textDecoration = "underline";
-    titleLink.style.display = "inline-block";
-    titleLink.style.cursor = pdfUrl ? "pointer" : "default";
-    titleLink.style.verticalAlign = "middle";
+if (isSeparatedMode) {
+  titleLink = document.createElement("a");
+  titleLink.textContent = title;
 
-    // Uモードでは表示名を常時下線表示。
-    // PDF/フォルダURLがない場合はクリックしても遷移しない。
-    if (!pdfUrl) {
-      titleLink.removeAttribute("href");
-      titleLink.removeAttribute("target");
-      titleLink.removeAttribute("rel");
-    }
+  titleLink.style.fontSize = fntsize;
+  titleLink.style.color = "#06c";
+  titleLink.style.textDecoration = "underline";
+  titleLink.style.display = "inline-block";
+  titleLink.style.cursor = pdfUrl ? "pointer" : "default";
+  titleLink.style.verticalAlign = "middle";
 
-    element.appendChild(playButton);
-    element.appendChild(document.createTextNode(" "));
-    element.appendChild(titleLink);
-  } else {
+  // Uモード：表示名クリックでPDFを別Windowに表示
+  if (pdfUrl) {
+    titleLink.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      window.open(
+        pdfUrl,
+        "pdfWindow",
+        "popup=yes,width=1200,height=900,resizable=yes,scrollbars=yes"
+      );
+    });
+  }
+
+  element.appendChild(playButton);
+  element.appendChild(document.createTextNode(" "));
+  element.appendChild(titleLink);
+} else {
     element.appendChild(playButton);
   }
 
