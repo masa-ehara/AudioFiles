@@ -40,7 +40,7 @@
 
 const AUDIO_BASE_URL = "https://masa-ehara.github.io/AudioFiles/";
 // 共通スクリプトの更新版番号（HTML側のscript URLにも ?v=20261013-3 を付ける）
-const COMMON_AUDIO_VERSION = "20261013-5";
+const COMMON_AUDIO_VERSION = "20261013-8";
 
 // ----- 実行環境判定 -----
 // Macだけ新しいWindowでPDFを開く。
@@ -226,36 +226,6 @@ audioPlayers.forEach((container, index) => {
     titleLink.style.cursor = pdfUrl ? "pointer" : "default";
     titleLink.style.verticalAlign = "middle";
 
-    // Uモード：表示名クリックでPDFを別Windowに表示
-    // クリックイベントの中で直接 window.open() を実行することで、
-    // ブラウザのポップアップ判定にユーザー操作を確実に伝える。
-    if (pdfUrl) {
-      titleLink.addEventListener("click", (e) => {
-        e.preventDefault();
-
-        // Mac + Uモード + 音声あり：
-        // 文書名クリックで資料Windowを開くと同時に、
-        // 音声が停止中または一時停止中なら再生を開始／再開する。
-        // 再生中なら音声状態はそのまま。
-        if (isMacEnvironment && !isNoAudio && audio) {
-          if (audio.paused || audio.ended) {
-            if (audio.ended) {
-              audio.currentTime = 0;
-            }
-
-            const playPromise = audio.play();
-            if (playPromise && typeof playPromise.catch === "function") {
-              playPromise.catch(() => {
-                stopSpace.style.visibility = "hidden";
-              });
-            }
-          }
-        }
-
-        openPdf(pdfUrl);
-      });
-    }
-
     element.appendChild(playButton);
     element.appendChild(document.createTextNode(" "));
     element.appendChild(titleLink);
@@ -394,5 +364,40 @@ audioPlayers.forEach((container, index) => {
         openPdf(pdfUrl);
       });
     }
+  }
+
+  // ----- Uモード：表示名クリック -----
+  // ここは audio / stopSpace の初期化が完了した後に登録する。
+  // これにより、既存の表示生成処理には影響を与えない。
+  if (isSeparatedMode && pdfUrl && titleLink) {
+    titleLink.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      // Macだけ：
+      // 資料Windowを開くと同時に、停止中／一時停止中なら音声を開始／再開。
+      // 再生中ならそのまま継続。
+      if (isMacEnvironment && !isNoAudio && audio) {
+        openPdf(pdfUrl);
+
+        if (audio.paused || audio.ended) {
+          if (audio.ended) {
+            audio.currentTime = 0;
+          }
+
+          const playPromise = audio.play();
+
+          if (playPromise && typeof playPromise.catch === "function") {
+            playPromise.catch(() => {
+              if (stopSpace) {
+                stopSpace.style.visibility = "hidden";
+              }
+            });
+          }
+        }
+      } else {
+        // iPhone / iPad は従来どおり。
+        openPdf(pdfUrl);
+      }
+    });
   }
 });
