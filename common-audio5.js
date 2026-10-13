@@ -60,8 +60,9 @@ function openPdf(pdfUrl) {
     );
   }
 
-  window.location.href = pdfUrl;
-  return null;
+  // iPhone / iPad は従来動作に戻す。
+  // window.location.href は Google Sites / Drive で403になる場合があるため使用しない。
+  return window.open(pdfUrl, "_blank");
 }
 
 const audioPlayers = Array.from(document.querySelectorAll(".audio-player"));
