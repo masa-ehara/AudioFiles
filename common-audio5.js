@@ -53,10 +53,26 @@ const isMacEnvironment =
 // iPhone / iPad：現在のWindowで表示
 function openPdf(pdfUrl) {
   if (isMacEnvironment) {
+    // 現在のウィンドウの右上を基準に配置する。
+    // 右端から20px、上端から20pxの位置を指定。
+    const popupWidth = 1200;
+    const popupHeight = 900;
+    const margin = 20;
+
+    const currentLeft = window.screenX ?? window.screenLeft ?? 0;
+    const currentTop = window.screenY ?? window.screenTop ?? 0;
+    const currentWidth = window.outerWidth || window.innerWidth || 1200;
+
+    const left = Math.max(
+      0,
+      currentLeft + currentWidth - popupWidth - margin
+    );
+    const top = Math.max(0, currentTop + margin);
+
     return window.open(
       pdfUrl,
       "pdfWindow",
-      "popup=yes,width=1200,height=900,left=120,top=60,resizable=yes,scrollbars=yes"
+      `popup=yes,width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
   }
 
