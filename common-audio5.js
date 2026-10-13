@@ -232,8 +232,28 @@ audioPlayers.forEach((container, index) => {
     if (pdfUrl) {
       titleLink.addEventListener("click", (e) => {
         e.preventDefault();
+
+        // Mac + Uモード + 音声あり：
+        // 文書名クリックで資料Windowを開くと同時に、
+        // 音声が停止中または一時停止中なら再生を開始／再開する。
+        // 再生中なら音声状態はそのまま。
+        if (isMacEnvironment && !isNoAudio && audio) {
+          if (audio.paused || audio.ended) {
+            if (audio.ended) {
+              audio.currentTime = 0;
+            }
+
+            const playPromise = audio.play();
+            if (playPromise && typeof playPromise.catch === "function") {
+              playPromise.catch(() => {
+                stopSpace.style.visibility = "hidden";
+              });
+            }
+          }
+        }
+
         openPdf(pdfUrl);
-      });
+      }));
     }
 
     element.appendChild(playButton);
