@@ -55,21 +55,24 @@ const isMacEnvironment =
 // iPhone / iPad：現在のWindowで表示
 function openPdf(pdfUrl) {
   if (isMacEnvironment) {
-    // 現在のウィンドウの右上を基準に配置する。
-    // 右端から20px、上端から20pxの位置を指定。
-    const popupWidth = 1200;
-    const popupHeight = 900;
+    // PDF Windowは「画面の右上」に配置する。
+    // 元Windowと重なり過ぎないよう、サイズも少し小さくする。
+    // ブラウザによってはleft/top指定が制限されるため、
+    // 現在Window基準ではなく、利用可能な画面領域の右上を基準にする。
+    const popupWidth = 1000;
+    const popupHeight = 800;
     const margin = 20;
 
-    const currentLeft = window.screenX ?? window.screenLeft ?? 0;
-    const currentTop = window.screenY ?? window.screenTop ?? 0;
-    const currentWidth = window.outerWidth || window.innerWidth || 1200;
+    const screenLeft = window.screen.availLeft ?? 0;
+    const screenTop = window.screen.availTop ?? 0;
+    const screenWidth = window.screen.availWidth || window.screen.width;
+    const screenHeight = window.screen.availHeight || window.screen.height;
 
     const left = Math.max(
-      0,
-      currentLeft + currentWidth - popupWidth - margin
+      screenLeft,
+      screenLeft + screenWidth - popupWidth - margin
     );
-    const top = Math.max(0, currentTop + margin);
+    const top = Math.max(screenTop, screenTop + margin);
 
     return window.open(
       pdfUrl,
