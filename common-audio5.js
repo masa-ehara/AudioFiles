@@ -16,9 +16,9 @@
 //
 // 【Uモード】data-mode="U"
 //   音声あり：🔈 ボタン → 音声のみ再生／一時停止
-//             表示名 → data-pdf を新しいWindowで開く
+//             表示名 → data-pdf を開く（Macは新しいWindow、iPhone/iPadは同一Window）
 //   音声なし：▪️ ボタン＋表示名
-//             表示名 → data-pdf を新しいWindowで開く
+//             表示名 → data-pdf を開く（Macは新しいWindow、iPhone/iPadは同一Window）
 //
 // 【再生状態表示】
 //   再生中：⏸️
@@ -40,15 +40,28 @@
 
 const AUDIO_BASE_URL = "https://masa-ehara.github.io/AudioFiles/";
 
-// PDFを新しいWindowで開く共通処理
-// left / top は「左上から少し右下」へずらすための指定。
-// ブラウザやiPhone/iPadでは、これらの位置・サイズ指定が無視される場合があります。
-function openPdfWindow(pdfUrl) {
-  return window.open(
-    pdfUrl,
-    "pdfWindow",
-    "popup=yes,width=1200,height=900,left=120,top=60,resizable=yes,scrollbars=yes"
-  );
+// ----- 実行環境判定 -----
+// Macだけ新しいWindowでPDFを開く。
+// iPhone / iPadは、従来どおり同一Window内でPDFを表示する。
+// iPadOSがMac風のUser-Agentを返す場合も考慮する。
+const isMacEnvironment =
+  /Macintosh|MacIntel|MacPPC|Mac68K/i.test(navigator.userAgent) &&
+  !/iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+// ----- PDF表示 -----
+// Mac：新しいWindowで表示
+// iPhone / iPad：現在のWindowで表示
+function openPdf(pdfUrl) {
+  if (isMacEnvironment) {
+    return window.open(
+      pdfUrl,
+      "pdfWindow",
+      "popup=yes,width=1200,height=900,left=120,top=60,resizable=yes,scrollbars=yes"
+    );
+  }
+
+  window.location.href = pdfUrl;
+  return null;
 }
 
 const audioPlayers = Array.from(document.querySelectorAll(".audio-player"));
@@ -176,7 +189,7 @@ audioPlayers.forEach((container, index) => {
     if (pdfUrl) {
       titleLink.addEventListener("click", (e) => {
         e.preventDefault();
-        openPdfWindow(pdfUrl);
+        openPdf(pdfUrl);
       });
     }
 
@@ -220,7 +233,7 @@ audioPlayers.forEach((container, index) => {
           // 引っ掛かりにくくなる。
           // Uモードでは資料表示を行わない。
           if (!isSeparatedMode && pdfUrl) {
-            openPdfWindow(pdfUrl);
+            openPdf(pdfUrl);
           }
 
           await audio.play();
@@ -309,7 +322,7 @@ audioPlayers.forEach((container, index) => {
     // 通常モードでは、PDFがあれば ▪️＋表示名 のボタンから開く。
     if (!isSeparatedMode && pdfUrl) {
       playButton.addEventListener("click", () => {
-        openPdfWindow(pdfUrl);
+        openPdf(pdfUrl);
       });
     }
   }
