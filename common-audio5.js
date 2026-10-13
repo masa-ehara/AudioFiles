@@ -253,7 +253,7 @@ audioPlayers.forEach((container, index) => {
         }
 
         openPdf(pdfUrl);
-      }));
+      });
     }
 
     element.appendChild(playButton);
