@@ -39,6 +39,8 @@
 //   したがって、音声あり／なしが混在しても同じ間隔で表示されます。
 
 const AUDIO_BASE_URL = "https://masa-ehara.github.io/AudioFiles/";
+// 共通スクリプトの更新版番号（HTML側のscript URLにも ?v=20261013-3 を付ける）
+const COMMON_AUDIO_VERSION = "20261013-3";
 
 // ----- 実行環境判定 -----
 // Macだけ新しいWindowでPDFを開く。
@@ -243,17 +245,23 @@ audioPlayers.forEach((container, index) => {
             audio.currentTime = 0;
           }
 
-          // ★重要：
-          // PDFを開く処理を await audio.play() より前に実行する。
-          // これにより「ユーザーのクリック → window.open()」という
-          // 直接の操作になるため、Chrome/Safariのポップアップ判定に
-          // 引っ掛かりにくくなる。
-          // Uモードでは資料表示を行わない。
+          // 音声再生を先に開始する。
+          // iPhone / iPadでは、PDF画面遷移を先に行うと
+          // 最初のクリックだけ音声が再生されないことがあるため、
+          // 元の動作順序に戻す。
+          // play() はユーザー操作直後に呼び出し、完了を待たずに
+          // PDF表示へ進む。
+          const playPromise = audio.play();
+
           if (!isSeparatedMode && pdfUrl) {
             openPdf(pdfUrl);
           }
 
-          await audio.play();
+          if (playPromise && typeof playPromise.catch === "function") {
+            playPromise.catch(() => {
+              stopSpace.style.visibility = "hidden";
+            });
+          }
         } else {
           audio.pause();
         }
