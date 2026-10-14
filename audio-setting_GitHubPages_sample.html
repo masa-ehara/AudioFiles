@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>音声説明設定</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+  }
+
+  .audio-setting {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    background: #f5f5f5;
+    user-select: none;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  }
+
+  .speaker-icon {
+    width: 54px;
+    height: 44px;
+    flex: 0 0 54px;
+    display: block;
+  }
+
+  .label {
+    font-size: 20px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .toggle {
+    position: relative;
+    width: 64px;
+    height: 34px;
+    border: none;
+    border-radius: 34px;
+    background: #999;
+    padding: 0;
+    cursor: pointer;
+    transition: background-color .2s ease;
+  }
+
+  .toggle-knob {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: white;
+    transition: left .2s ease;
+  }
+
+  .toggle.on {
+    background: #168df0;
+  }
+
+  .toggle.on .toggle-knob {
+    left: 34px;
+  }
+
+  .toggle.off {
+    background: #999;
+  }
+</style>
+</head>
+<body>
+
+<div class="audio-setting">
+  <svg id="speakerIcon" class="speaker-icon" viewBox="0 0 54 44"
+       xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M5 15h11l13-10v34L16 29H5z" fill="#333"/>
+    <path d="M35 14c4 4 4 12 0 16" fill="none" stroke="#333"
+          stroke-width="4" stroke-linecap="round"/>
+    <path d="M42 8c8 8 8 20 0 28" fill="none" stroke="#333"
+          stroke-width="4" stroke-linecap="round"/>
+  </svg>
+
+  <span class="label">音声説明</span>
+
+  <button id="audioToggle" class="toggle on"
+          type="button" aria-label="音声説明 ON/OFF"
+          aria-pressed="true">
+    <span class="toggle-knob"></span>
+  </button>
+</div>
+
+<script>
+(function () {
+  const STORAGE_KEY = "wakuwaku_audio_enabled";
+  const toggle = document.getElementById("audioToggle");
+  const icon = document.getElementById("speakerIcon");
+
+  function getEnabled() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved === null ? true : saved === "true";
+  }
+
+  function setEnabled(enabled) {
+    localStorage.setItem(STORAGE_KEY, String(enabled));
+    render(enabled);
+
+    // Google Sites側のcommon-audio.jsへ通知
+    window.parent.postMessage({
+      type: "WAKUWAKU_AUDIO_SETTING",
+      enabled: enabled
+    }, "*");
+  }
+
+  function render(enabled) {
+    toggle.classList.toggle("on", enabled);
+    toggle.classList.toggle("off", !enabled);
+    toggle.setAttribute("aria-pressed", String(enabled));
+
+    // OFF時はスピーカーに赤い×
+    const oldX = icon.querySelector(".off-x");
+    if (oldX) oldX.remove();
+
+    if (!enabled) {
+      const ns = "http://www.w3.org/2000/svg";
+      const g = document.createElementNS(ns, "g");
+      g.setAttribute("class", "off-x");
+
+      const l1 = document.createElementNS(ns, "line");
+      l1.setAttribute("x1", "34");
+      l1.setAttribute("y1", "6");
+      l1.setAttribute("x2", "50");
+      l1.setAttribute("y2", "22");
+      l1.setAttribute("stroke", "#d22");
+      l1.setAttribute("stroke-width", "4");
+      l1.setAttribute("stroke-linecap", "round");
+
+      const l2 = document.createElementNS(ns, "line");
+      l2.setAttribute("x1", "50");
+      l2.setAttribute("y1", "6");
+      l2.setAttribute("x2", "34");
+      l2.setAttribute("y2", "22");
+      l2.setAttribute("stroke", "#d22");
+      l2.setAttribute("stroke-width", "4");
+      l2.setAttribute("stroke-linecap", "round");
+
+      g.appendChild(l1);
+      g.appendChild(l2);
+      icon.appendChild(g);
+    }
+  }
+
+  // 埋め込みHTMLが読み込まれたら、現在値をGoogle Sites側へ通知
+  const enabled = getEnabled();
+  render(enabled);
+  window.parent.postMessage({
+    type: "WAKUWAKU_AUDIO_SETTING",
+    enabled: enabled
+  }, "*");
+
+  toggle.addEventListener("click", function () {
+    setEnabled(!getEnabled());
+  });
+})();
+</script>
+</body>
+</html>
