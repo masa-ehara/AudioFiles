@@ -10,26 +10,20 @@
 //
 // 【通常モード】data-mode を省略
 //   音声あり：🔈 ボタンで音声再生／一時停止
-//             data-pdf が指定されていれば資料も新しいWindowで開く
+//             data-pdf が指定されていれば資料も新しいタブで開く
 //   音声なし：▪️＋表示名を表示
 //             data-pdf が指定されていればクリックで資料を開く
 //
 // 【Uモード】data-mode="U"
 //   音声あり：🔈 ボタン → 音声のみ再生／一時停止
-//             表示名 → data-pdf を開く（Macは新しいWindow、iPhone/iPadは同一Window）
+//             表示名 → data-pdf を新しいタブで開く
 //   音声なし：▪️ ボタン＋表示名
-//             表示名 → data-pdf を開く（Macは新しいWindow、iPhone/iPadは同一Window）
-//
-// 【再生状態表示】
-//   再生中：⏸️
-//   一時停止中：▶️（押すと一時停止位置から再開）
-//   完全停止／再生終了：🔈（押すと最初から再生）
+//             表示名 → data-pdf を新しいタブで開く
 //
 // 【停止ボタン】
 //   初期状態：非表示
 //   音声再生開始：表示
-//   一時停止：非表示
-//   再開：表示
+//   一時停止・再開：表示
 //   停止：非表示
 //   再生終了：非表示
 //
@@ -39,75 +33,45 @@
 //   したがって、音声あり／なしが混在しても同じ間隔で表示されます。
 
 const AUDIO_BASE_URL = "https://masa-ehara.github.io/AudioFiles/";
-// 共通スクリプトの更新版番号（HTML側のscript URLにも ?v=20261013-3 を付ける）
-const COMMON_AUDIO_VERSION = "20261013-8";
-
-// ----- 実行環境判定 -----
-// Macだけ新しいWindowでPDFを開く。
-// iPhone / iPadは、従来どおり同一Window内でPDFを表示する。
-// iPadOSがMac風のUser-Agentを返す場合も考慮する。
-const isMacEnvironment =
-  /Macintosh|MacIntel|MacPPC|Mac68K/i.test(navigator.userAgent) &&
-  !/iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-// ----- PDF表示 -----
-// Mac：新しいWindowで表示
-// iPhone / iPad：現在のWindowで表示
-function openPdf(pdfUrl) {
-  if (isMacEnvironment) {
-    // 現在の元Windowを基準に、右上方向へPDF Windowを
-    // 「はみ出させて」表示する。
-    //
-    // 重要：
-    // left / top は画面右上からの固定値ではなく、
-    // 現在Windowの screenX / screenY / outerWidth から計算する。
-    // さらに moveTo() を使って、ブラウザが初期配置を変更した場合も
-    // もう一度相対位置へ移動させる。
-    const popupWidth = 1000;
-    const popupHeight = 800;
-
-    const currentLeft = window.screenX ?? window.screenLeft ?? 0;
-    const currentTop = window.screenY ?? window.screenTop ?? 0;
-    const currentWidth = window.outerWidth || window.innerWidth || 1200;
-
-    const currentRight = currentLeft + currentWidth;
-
-    // 元Windowの右端から約750px左をPDF Windowの左端とする。
-    // その結果、PDF Windowは元Windowと大きく重なりながら、
-    // 右側へ約250pxはみ出す。
-    const left = Math.round(currentRight - 750);
-
-    // 元Windowの上端より約150px上へ。
-    const top = Math.round(currentTop - 150);
-
-    const popup = window.open(
-      pdfUrl,
-      "pdfWindow",
-      `popup=yes,width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=yes`
-    );
-
-    if (popup) {
-      // ブラウザが初期配置を補正した場合に備えて、
-      // 少し遅らせて相対位置を再指定する。
-      setTimeout(() => {
-        try {
-          popup.moveTo(left, top);
-          popup.resizeTo(popupWidth, popupHeight);
-        } catch (e) {
-          // ブラウザがWindow位置変更を禁止している場合は何もしない。
-        }
-      }, 100);
-    }
-
-    return popup;
-  }
-
-  // iPhone / iPad は従来動作を維持する。
-  // window.location.href は Google Sites / Drive で403になる場合があるため使用しない。
-  return window.open(pdfUrl, "_blank");
-}
 
 const audioPlayers = Array.from(document.querySelectorAll(".audio-player"));
+
+// ===== 音声ON/OFFスイッチ連携 =====
+// GitHub Pagesの音声設定HTMLから送られる postMessage を受け取ります。
+// スイッチが存在しないページでは、従来どおり「音声ON」で動作します。
+const AUDIO_SETTING_MESSAGE = "WAKUWAKU_AUDIO_SETTING";
+let audioEnabled = true;
+const audioControls = [];
+
+function resetAudioControl(control) {
+  const { audio, playButton, stopSpace, isSeparatedMode, title } = control;
+
+  audio.pause();
+  audio.currentTime = 0;
+
+  if (isSeparatedMode) {
+    playButton.textContent = "🔈";
+    playButton.setAttribute("aria-label", `${title} 音声を再生`);
+  } else {
+    playButton.textContent = "🔈 " + title;
+  }
+
+  stopSpace.style.visibility = "hidden";
+}
+
+window.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.type !== AUDIO_SETTING_MESSAGE || typeof data.enabled !== "boolean") {
+    return;
+  }
+
+  audioEnabled = data.enabled;
+
+  // OFFに切り替えた時、再生中の音声は停止します。
+  if (!audioEnabled) {
+    audioControls.forEach(resetAudioControl);
+  }
+});
 
 audioPlayers.forEach((container, index) => {
   const element = /** @type {HTMLElement} */ (container);
@@ -124,6 +88,8 @@ audioPlayers.forEach((container, index) => {
   const isSeparatedMode = mode === "U";
 
   // ----- H（Header）モード -----
+  // Hモードはタイトルだけを表示し、先頭記号・音声ボタン・PDF表示は行わない。
+  // 項目間隔は通常項目と同じく data-fntsize を確保する。
   if (isHeaderMode) {
     element.style.margin = "0";
     element.style.padding = "0";
@@ -132,6 +98,7 @@ audioPlayers.forEach((container, index) => {
       index < audioPlayers.length - 1 ? fntsize : "0";
     element.style.listStyleType = "none";
 
+    // HTML側でH項目が<li>になっている場合のリストマーカーも消す。
     if (element.parentElement && element.parentElement.tagName === "LI") {
       element.parentElement.style.listStyleType = "none";
     }
@@ -144,6 +111,7 @@ audioPlayers.forEach((container, index) => {
     header.style.display = "block";
     header.style.verticalAlign = "middle";
 
+    // 文字なしHモードは、文字サイズ1行分だけ高さを確保する。
     if (title === "") {
       header.style.height = fntsize;
     }
@@ -153,6 +121,7 @@ audioPlayers.forEach((container, index) => {
   }
 
   // ----- 音声 -----
+  // 音声なし項目では audio 要素そのものを作成しない。
   let audio = null;
   if (!isNoAudio) {
     audio = document.createElement("audio");
@@ -161,12 +130,16 @@ audioPlayers.forEach((container, index) => {
   }
 
   // ----- 表示領域 -----
+  // 複数項目を1ブロックに入れた場合、
+  // 各項目の間隔を文字サイズと同じ値にする。
   element.style.margin = "0";
   element.style.padding = "0";
   element.style.lineHeight = "1.2";
+  // 項目間の間隔だけを設定し、最後の項目の下には余白を付けない。
   element.style.marginBottom =
     index < audioPlayers.length - 1 ? fntsize : "0";
 
+  // 既存HTMLから生成物が二重になるのを防止
   element.replaceChildren();
 
   // ----- 音声再生／資料表示ボタン -----
@@ -177,7 +150,12 @@ audioPlayers.forEach((container, index) => {
   playButton.style.verticalAlign = "middle";
 
   // ===== ボタン枠・背景の扱い =====
+  // 通常モード＋音声ありだけ、外枠＋グレー背景を表示。
+  // Uモード（音声あり／なし）と音声なし項目は枠・背景なし。
+  // Google Sites側のbutton CSSに負けないよう !important を使用する。
   if (!isSeparatedMode && !isNoAudio) {
+    // 通常モード：以前の表示と同じく、グレー背景＋外枠。
+    // appearance は native 描画に任せず、CSSで背景色を確実に表示する。
     playButton.style.setProperty("border", "1px solid #767676", "important");
     playButton.style.setProperty("border-radius", "2px", "important");
     playButton.style.setProperty("background-color", "#ededed", "important");
@@ -218,13 +196,23 @@ audioPlayers.forEach((container, index) => {
   if (isSeparatedMode) {
     titleLink = document.createElement("a");
     titleLink.textContent = title;
-
+    titleLink.href = pdfUrl || "#";
+    titleLink.target = "_blank";
+    titleLink.rel = "noopener noreferrer";
     titleLink.style.fontSize = fntsize;
     titleLink.style.color = "#06c";
     titleLink.style.textDecoration = "underline";
     titleLink.style.display = "inline-block";
     titleLink.style.cursor = pdfUrl ? "pointer" : "default";
     titleLink.style.verticalAlign = "middle";
+
+    // Uモードでは表示名を常時下線表示。
+    // PDF/フォルダURLがない場合はクリックしても遷移しない。
+    if (!pdfUrl) {
+      titleLink.removeAttribute("href");
+      titleLink.removeAttribute("target");
+      titleLink.removeAttribute("rel");
+    }
 
     element.appendChild(playButton);
     element.appendChild(document.createTextNode(" "));
@@ -234,6 +222,9 @@ audioPlayers.forEach((container, index) => {
   }
 
   // ----- 停止ボタン／同幅スペース -----
+  // ⏹️が表示されていない時も、同じ幅の空白を常時確保する。
+  // 外側が「右端寄せ」の場合でも、表示／非表示で全体幅が変わらないようにする。
+  // 音声なし項目では、従来どおり停止領域そのものを作らない。
   const stopSpace = document.createElement("span");
   stopSpace.textContent = "⏹️";
   stopSpace.style.fontSize = fntsize;
@@ -247,34 +238,42 @@ audioPlayers.forEach((container, index) => {
 
   element.appendChild(stopSpace);
 
+  // 音声ON/OFFスイッチからOFF通知を受けた時に停止できるよう登録。
+  if (!isNoAudio && audio) {
+    audioControls.push({
+      audio,
+      playButton,
+      stopSpace,
+      isSeparatedMode,
+      title
+    });
+  }
+
   // ----- 音声あり項目の処理 -----
   if (!isNoAudio && audio) {
-    // ⏹️による完全停止と通常の一時停止を区別するためのフラグ。
-    let isStopping = false;
-
     playButton.addEventListener("click", async () => {
+      // 音声OFF中は音声を再生しません。
+      // 通常モードでPDFが指定されている場合は、従来どおり資料を開きます。
+      if (!audioEnabled) {
+        if (!isSeparatedMode && pdfUrl) {
+          window.open(pdfUrl, "_blank");
+        }
+        return;
+      }
+
       try {
         if (audio.paused || audio.ended) {
           if (audio.ended) {
             audio.currentTime = 0;
           }
 
-          // 音声再生を先に開始する。
-          // iPhone / iPadでは、PDF画面遷移を先に行うと
-          // 最初のクリックだけ音声が再生されないことがあるため、
-          // 元の動作順序に戻す。
-          // play() はユーザー操作直後に呼び出し、完了を待たずに
-          // PDF表示へ進む。
-          const playPromise = audio.play();
+          await audio.play();
 
+          // 通常モードでは従来どおり、
+          // 音声ボタンのクリックで資料も開く。
+          // Uモードでは資料表示を行わない。
           if (!isSeparatedMode && pdfUrl) {
-            openPdf(pdfUrl);
-          }
-
-          if (playPromise && typeof playPromise.catch === "function") {
-            playPromise.catch(() => {
-              stopSpace.style.visibility = "hidden";
-            });
+            window.open(pdfUrl, "_blank");
           }
         } else {
           audio.pause();
@@ -286,7 +285,6 @@ audioPlayers.forEach((container, index) => {
 
     // ----- 停止 -----
     stopSpace.addEventListener("click", () => {
-      isStopping = true;
       audio.pause();
       audio.currentTime = 0;
 
@@ -314,27 +312,18 @@ audioPlayers.forEach((container, index) => {
 
     // ----- 一時停止 -----
     audio.addEventListener("pause", () => {
-      if (isStopping) {
+      if (!audio.ended) {
         if (isSeparatedMode) {
           playButton.textContent = "🔈";
           playButton.setAttribute("aria-label", `${title} 音声を再生`);
         } else {
           playButton.textContent = "🔈 " + title;
         }
-        stopSpace.style.visibility = "hidden";
-        isStopping = false;
-        return;
-      }
 
-      if (!audio.ended) {
-        if (isSeparatedMode) {
-          playButton.textContent = "▶️";
-          playButton.setAttribute("aria-label", `${title} 音声を再開`);
-        } else {
-          playButton.textContent = "▶️ " + title;
-        }
-
+        // 一時停止中は停止ボタンを表示したまま
+        // stopSpace.style.visibility = "visible";
         stopSpace.style.visibility = "hidden";
+
       }
     });
 
@@ -361,43 +350,8 @@ audioPlayers.forEach((container, index) => {
     // 通常モードでは、PDFがあれば ▪️＋表示名 のボタンから開く。
     if (!isSeparatedMode && pdfUrl) {
       playButton.addEventListener("click", () => {
-        openPdf(pdfUrl);
+        window.open(pdfUrl, "_blank");
       });
     }
-  }
-
-  // ----- Uモード：表示名クリック -----
-  // ここは audio / stopSpace の初期化が完了した後に登録する。
-  // これにより、既存の表示生成処理には影響を与えない。
-  if (isSeparatedMode && pdfUrl && titleLink) {
-    titleLink.addEventListener("click", (e) => {
-      e.preventDefault();
-
-      // Macだけ：
-      // 資料Windowを開くと同時に、停止中／一時停止中なら音声を開始／再開。
-      // 再生中ならそのまま継続。
-      if (isMacEnvironment && !isNoAudio && audio) {
-        openPdf(pdfUrl);
-
-        if (audio.paused || audio.ended) {
-          if (audio.ended) {
-            audio.currentTime = 0;
-          }
-
-          const playPromise = audio.play();
-
-          if (playPromise && typeof playPromise.catch === "function") {
-            playPromise.catch(() => {
-              if (stopSpace) {
-                stopSpace.style.visibility = "hidden";
-              }
-            });
-          }
-        }
-      } else {
-        // iPhone / iPad は従来どおり。
-        openPdf(pdfUrl);
-      }
-    });
   }
 });
