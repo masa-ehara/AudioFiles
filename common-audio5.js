@@ -45,8 +45,8 @@ const audioPlayers = Array.from(document.querySelectorAll(".audio-player"));
 // 同じGitHub Pages上の「裏方ブリッジ」を各埋め込み内に非表示で読み込みます。
 // common-audio5本体の音声/PDF機能には手を加えず、ON/OFF連携だけを担当します。
 const AUDIO_SETTING_MESSAGE = "WAKUWAKU_AUDIO_SETTING";
+const AUDIO_BRIDGE_URL = "https://masa-ehara.github.io/AudioFiles/audio-setting-bridge.html";
 const AUDIO_BRIDGE_ORIGIN = "https://masa-ehara.github.io";
-const AUDIO_BRIDGE_URL = "https://masa-ehara.github.io/AudioFiles/audio-setting-bridge.html?v=3";
 let audioEnabled = true;
 const audioControls = [];
 
@@ -67,6 +67,22 @@ function sendBridgeRequest(message) {
   }
 }
 
+function setAudioDisabledIndicator(control) {
+  const { stopSpace, title } = control;
+  stopSpace.textContent = "🚫";
+  stopSpace.style.visibility = "visible";
+  stopSpace.style.cursor = "default";
+  stopSpace.setAttribute("aria-label", `${title} 音声OFF`);
+}
+
+function setAudioEnabledIndicator(control) {
+  const { stopSpace, title } = control;
+  stopSpace.textContent = "⏹️";
+  stopSpace.style.visibility = "hidden";
+  stopSpace.style.cursor = "pointer";
+  stopSpace.setAttribute("aria-label", `${title} 音声を停止`);
+}
+
 function resetAudioControl(control) {
   const { audio, playButton, stopSpace, isSeparatedMode, title } = control;
 
@@ -80,7 +96,11 @@ function resetAudioControl(control) {
     playButton.textContent = "🔈 " + title;
   }
 
-  stopSpace.style.visibility = "hidden";
+  if (audioEnabled) {
+    setAudioEnabledIndicator(control);
+  } else {
+    setAudioDisabledIndicator(control);
+  }
 }
 
 window.addEventListener("message", (event) => {
@@ -96,10 +116,15 @@ window.addEventListener("message", (event) => {
 
   audioEnabled = data.enabled;
 
-  // OFFに切り替えた時、再生中の音声は停止します。
-  if (!audioEnabled) {
-    audioControls.forEach(resetAudioControl);
-  }
+  // OFFに切り替えた時、再生中の音声を停止し、
+  // ⏹️の位置を🚫に変更します。
+  audioControls.forEach(control => {
+    if (!audioEnabled) {
+      resetAudioControl(control);
+    } else {
+      setAudioEnabledIndicator(control);
+    }
+  });
 });
 
 audioBridge.addEventListener("load", () => {
@@ -329,7 +354,11 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopSpace.style.visibility = "hidden";
+      if (audioEnabled) {
+        setAudioEnabledIndicator({ stopSpace, title });
+      } else {
+        setAudioDisabledIndicator({ stopSpace, title });
+      }
     });
 
     // ----- 再生開始 -----
@@ -341,7 +370,10 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "⏸️ " + title;
       }
 
+      stopSpace.textContent = "⏹️";
+      stopSpace.style.cursor = "pointer";
       stopSpace.style.visibility = "visible";
+      stopSpace.setAttribute("aria-label", `${title} 音声を停止`);
     });
 
     // ----- 一時停止 -----
@@ -370,7 +402,11 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopSpace.style.visibility = "hidden";
+      if (audioEnabled) {
+        setAudioEnabledIndicator({ stopSpace, title });
+      } else {
+        setAudioDisabledIndicator({ stopSpace, title });
+      }
     });
 
     // ----- ページ離脱 -----
