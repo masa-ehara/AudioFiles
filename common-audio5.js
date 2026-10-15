@@ -72,6 +72,7 @@ function setAudioDisabledIndicator(control) {
   stopSpace.textContent = "🚫";
   stopSpace.style.visibility = "visible";
   stopSpace.style.cursor = "default";
+  stopSpace.dataset.disabledVisible = "true";
   stopSpace.setAttribute("aria-label", `${title} 音声OFF`);
 }
 
@@ -80,6 +81,7 @@ function setAudioEnabledIndicator(control) {
   stopSpace.textContent = "⏹️";
   stopSpace.style.visibility = "hidden";
   stopSpace.style.cursor = "pointer";
+  stopSpace.dataset.disabledVisible = "false";
   stopSpace.setAttribute("aria-label", `${title} 音声を停止`);
 }
 
@@ -101,6 +103,7 @@ function resetAudioControl(control) {
   stopSpace.textContent = "⏹️";
   stopSpace.style.visibility = "hidden";
   stopSpace.style.cursor = "pointer";
+  stopSpace.dataset.disabledVisible = "false";
   stopSpace.setAttribute("aria-label", `${title} 音声を停止`);
 }
 
@@ -319,10 +322,15 @@ audioPlayers.forEach((container, index) => {
         // ただし、⏹️の代わりに🚫を表示する。
         // 1回目のクリック：🚫を表示
         // 2回目のクリック：🚫を消す
-        if (stopSpace.style.visibility === "visible") {
+        if (stopSpace.dataset.disabledVisible === "true") {
+          // 🚫表示中なら、通常の⏹️と同じくクリックで表示を消す。
+          stopSpace.textContent = "⏹️";
           stopSpace.style.visibility = "hidden";
           stopSpace.style.cursor = "pointer";
+          stopSpace.dataset.disabledVisible = "false";
+          stopSpace.setAttribute("aria-label", `${title} 音声を停止`);
         } else {
+          // 非表示なら、⏹️の代わりに🚫を表示する。
           setAudioDisabledIndicator({ stopSpace, title });
         }
 
