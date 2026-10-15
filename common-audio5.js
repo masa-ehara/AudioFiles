@@ -118,7 +118,7 @@ window.addEventListener("message", (event) => {
   audioEnabled = data.enabled;
 
   // OFFに切り替えた時、再生中の音声を停止します。
-  // 🚫は🔈ボタンを押した時だけ表示します。
+  // 🚫の表示／非表示は、通常の⏹️と同じく🔈ボタン側の操作で制御します。
   audioControls.forEach(control => {
     if (!audioEnabled) {
       resetAudioControl(control);
@@ -315,8 +315,16 @@ audioPlayers.forEach((container, index) => {
       // 音声OFF中は音声を再生しません。
       // 通常モードでPDFが指定されている場合は、従来どおり資料を開きます。
       if (!audioEnabled) {
-        // 音声OFF中に🔈ボタンを押した時だけ🚫を表示。
-        setAudioDisabledIndicator({ stopSpace, title });
+        // 音声OFF中も、通常の再生／一時停止時と同じ表示遷移を維持する。
+        // ただし、⏹️の代わりに🚫を表示する。
+        // 1回目のクリック：🚫を表示
+        // 2回目のクリック：🚫を消す
+        if (stopSpace.style.visibility === "visible") {
+          stopSpace.style.visibility = "hidden";
+          stopSpace.style.cursor = "pointer";
+        } else {
+          setAudioDisabledIndicator({ stopSpace, title });
+        }
 
         // 通常モードでPDFが指定されている場合は、従来どおり資料を開く。
         if (!isSeparatedMode && pdfUrl) {
