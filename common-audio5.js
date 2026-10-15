@@ -34,6 +34,10 @@
 
 const AUDIO_BASE_URL = "https://masa-ehara.github.io/AudioFiles/";
 
+// ===== バージョン情報（確認用） =====
+const COMMON_AUDIO_VERSION = "5.1";
+console.info("common-audio5 version:", COMMON_AUDIO_VERSION);
+
 const audioPlayers = Array.from(document.querySelectorAll(".audio-player"));
 
 // ===== 音声ON/OFFスイッチ連携 =====
