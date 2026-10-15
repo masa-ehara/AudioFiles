@@ -96,11 +96,12 @@ function resetAudioControl(control) {
     playButton.textContent = "🔈 " + title;
   }
 
-  if (audioEnabled) {
-    setAudioEnabledIndicator(control);
-  } else {
-    setAudioDisabledIndicator(control);
-  }
+  // OFFに切り替わっただけでは🚫を表示しない。
+  // 🔈ボタンを実際に押した時だけ表示する。
+  stopSpace.textContent = "⏹️";
+  stopSpace.style.visibility = "hidden";
+  stopSpace.style.cursor = "pointer";
+  stopSpace.setAttribute("aria-label", `${title} 音声を停止`);
 }
 
 window.addEventListener("message", (event) => {
@@ -116,8 +117,8 @@ window.addEventListener("message", (event) => {
 
   audioEnabled = data.enabled;
 
-  // OFFに切り替えた時、再生中の音声を停止し、
-  // ⏹️の位置を🚫に変更します。
+  // OFFに切り替えた時、再生中の音声を停止します。
+  // 🚫は🔈ボタンを押した時だけ表示します。
   audioControls.forEach(control => {
     if (!audioEnabled) {
       resetAudioControl(control);
@@ -314,6 +315,10 @@ audioPlayers.forEach((container, index) => {
       // 音声OFF中は音声を再生しません。
       // 通常モードでPDFが指定されている場合は、従来どおり資料を開きます。
       if (!audioEnabled) {
+        // 音声OFF中に🔈ボタンを押した時だけ🚫を表示。
+        setAudioDisabledIndicator({ stopSpace, title });
+
+        // 通常モードでPDFが指定されている場合は、従来どおり資料を開く。
         if (!isSeparatedMode && pdfUrl) {
           window.open(pdfUrl, "_blank");
         }
