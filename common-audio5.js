@@ -67,24 +67,6 @@ function sendBridgeRequest(message) {
   }
 }
 
-function setAudioDisabledIndicator(control) {
-  const { stopSpace, title } = control;
-  stopSpace.textContent = "🚫";
-  stopSpace.style.visibility = "visible";
-  stopSpace.style.cursor = "default";
-  stopSpace.dataset.disabledVisible = "true";
-  stopSpace.setAttribute("aria-label", `${title} 音声OFF`);
-}
-
-function setAudioEnabledIndicator(control) {
-  const { stopSpace, title } = control;
-  stopSpace.textContent = "⏹️";
-  stopSpace.style.visibility = "hidden";
-  stopSpace.style.cursor = "pointer";
-  stopSpace.dataset.disabledVisible = "false";
-  stopSpace.setAttribute("aria-label", `${title} 音声を停止`);
-}
-
 function resetAudioControl(control) {
   const { audio, playButton, stopSpace, isSeparatedMode, title } = control;
 
@@ -98,12 +80,9 @@ function resetAudioControl(control) {
     playButton.textContent = "🔈 " + title;
   }
 
-  // OFFに切り替わっただけでは🚫を表示しない。
-  // 🔈ボタンを実際に押した時だけ表示する。
-  stopSpace.textContent = "⏹️";
+  stopSpace.textContent = audioEnabled ? "⏹️" : "🚫";
   stopSpace.style.visibility = "hidden";
   stopSpace.style.cursor = "pointer";
-  stopSpace.dataset.disabledVisible = "false";
   stopSpace.setAttribute("aria-label", `${title} 音声を停止`);
 }
 
@@ -121,14 +100,7 @@ window.addEventListener("message", (event) => {
   audioEnabled = data.enabled;
 
   // OFFに切り替えた時、再生中の音声を停止します。
-  // 🚫の表示／非表示は、通常の⏹️と同じく🔈ボタン側の操作で制御します。
-  audioControls.forEach(control => {
-    if (!audioEnabled) {
-      resetAudioControl(control);
-    } else {
-      setAudioEnabledIndicator(control);
-    }
-  });
+  audioControls.forEach(resetAudioControl);
 });
 
 audioBridge.addEventListener("load", () => {
@@ -318,23 +290,13 @@ audioPlayers.forEach((container, index) => {
       // 音声OFF中は音声を再生しません。
       // 通常モードでPDFが指定されている場合は、従来どおり資料を開きます。
       if (!audioEnabled) {
-        // 音声OFF中も、通常の再生／一時停止時と同じ表示遷移を維持する。
-        // ただし、⏹️の代わりに🚫を表示する。
-        // 1回目のクリック：🚫を表示
-        // 2回目のクリック：🚫を消す
-        if (stopSpace.dataset.disabledVisible === "true") {
-          // 🚫表示中なら、通常の⏹️と同じくクリックで表示を消す。
-          stopSpace.textContent = "⏹️";
-          stopSpace.style.visibility = "hidden";
-          stopSpace.style.cursor = "pointer";
-          stopSpace.dataset.disabledVisible = "false";
-          stopSpace.setAttribute("aria-label", `${title} 音声を停止`);
-        } else {
-          // 非表示なら、⏹️の代わりに🚫を表示する。
-          setAudioDisabledIndicator({ stopSpace, title });
-        }
+        // 音声OFF中は再生しません。⏹️の代わりに🚫を表示します。
+        stopSpace.textContent = "🚫";
+        stopSpace.style.visibility = "visible";
+        stopSpace.style.cursor = "default";
+        stopSpace.setAttribute("aria-label", `${title} 音声OFF`);
 
-        // 通常モードでPDFが指定されている場合は、従来どおり資料を開く。
+        // 通常モードでPDFが指定されている場合は、従来どおり資料を開きます。
         if (!isSeparatedMode && pdfUrl) {
           window.open(pdfUrl, "_blank");
         }
@@ -375,11 +337,10 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      if (audioEnabled) {
-        setAudioEnabledIndicator({ stopSpace, title });
-      } else {
-        setAudioDisabledIndicator({ stopSpace, title });
-      }
+      stopSpace.textContent = "⏹️";
+      stopSpace.style.visibility = "hidden";
+      stopSpace.style.cursor = "pointer";
+      stopSpace.setAttribute("aria-label", `${title} 音声を停止`);
     });
 
     // ----- 再生開始 -----
@@ -423,11 +384,10 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      if (audioEnabled) {
-        setAudioEnabledIndicator({ stopSpace, title });
-      } else {
-        setAudioDisabledIndicator({ stopSpace, title });
-      }
+      stopSpace.textContent = "⏹️";
+      stopSpace.style.visibility = "hidden";
+      stopSpace.style.cursor = "pointer";
+      stopSpace.setAttribute("aria-label", `${title} 音声を停止`);
     });
 
     // ----- ページ離脱 -----
