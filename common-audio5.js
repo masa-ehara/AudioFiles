@@ -261,7 +261,7 @@ audioPlayers.forEach((container, index) => {
   // 外側が「右端寄せ」の場合でも、表示／非表示で全体幅が変わらないようにする。
   // 音声なし項目では、従来どおり停止領域そのものを作らない。
   const stopSpace = document.createElement("span");
-  stopSpace.textContent = "⏹️";
+  stopSpace.textContent = audioEnabled ? "⏹️" : "🚫";
   stopSpace.style.fontSize = fntsize;
   stopSpace.style.padding = "0px 2px";
   stopSpace.style.cursor = "pointer";
@@ -290,14 +290,12 @@ audioPlayers.forEach((container, index) => {
       // 音声OFF中は音声を再生しません。
       // 通常モードでPDFが指定されている場合は、従来どおり資料を開きます。
       if (!audioEnabled) {
-        // 音声OFF中は再生しません。⏹️の代わりに🚫を表示し、
-        // 次のクリックで表示を消します。
-        if (stopSpace.style.visibility === "visible") {
-          stopSpace.style.visibility = "hidden";
-        } else {
-          stopSpace.textContent = "🚫";
-          stopSpace.style.visibility = "visible";
-        }
+        // 音声OFF中は再生しません。
+        // ⏹️の代わりに🚫を表示し、通常時と同じ表示／非表示の遷移だけ行います。
+        stopSpace.textContent = "🚫";
+        stopSpace.style.visibility =
+          stopSpace.style.visibility === "visible" ? "hidden" : "visible";
+        stopSpace.style.cursor = "pointer";
 
         // 通常モードでPDFが指定されている場合は、従来どおり資料を開きます。
         if (!isSeparatedMode && pdfUrl) {
@@ -340,7 +338,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopSpace.textContent = "⏹️";
+      stopSpace.textContent = audioEnabled ? "⏹️" : "🚫";
       stopSpace.style.visibility = "hidden";
       stopSpace.style.cursor = "pointer";
       stopSpace.setAttribute("aria-label", `${title} 音声を停止`);
@@ -355,7 +353,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "⏸️ " + title;
       }
 
-      stopSpace.textContent = "⏹️";
+      stopSpace.textContent = audioEnabled ? "⏹️" : "🚫";
       stopSpace.style.cursor = "pointer";
       stopSpace.style.visibility = "visible";
       stopSpace.setAttribute("aria-label", `${title} 音声を停止`);
@@ -387,7 +385,7 @@ audioPlayers.forEach((container, index) => {
         playButton.textContent = "🔈 " + title;
       }
 
-      stopSpace.textContent = "⏹️";
+      stopSpace.textContent = audioEnabled ? "⏹️" : "🚫";
       stopSpace.style.visibility = "hidden";
       stopSpace.style.cursor = "pointer";
       stopSpace.setAttribute("aria-label", `${title} 音声を停止`);
