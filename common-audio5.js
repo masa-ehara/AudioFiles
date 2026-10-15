@@ -35,7 +35,7 @@
 const AUDIO_BASE_URL = "https://masa-ehara.github.io/AudioFiles/";
 
 // ===== バージョン情報（確認用） =====
-const COMMON_AUDIO_VERSION = "5.1";
+const COMMON_AUDIO_VERSION = "5.3";
 console.info("common-audio5 version:", COMMON_AUDIO_VERSION);
 
 const audioPlayers = Array.from(document.querySelectorAll(".audio-player"));
@@ -45,7 +45,8 @@ const audioPlayers = Array.from(document.querySelectorAll(".audio-player"));
 // 同じGitHub Pages上の「裏方ブリッジ」を各埋め込み内に非表示で読み込みます。
 // common-audio5本体の音声/PDF機能には手を加えず、ON/OFF連携だけを担当します。
 const AUDIO_SETTING_MESSAGE = "WAKUWAKU_AUDIO_SETTING";
-const AUDIO_BRIDGE_URL = "https://masa-ehara.github.io/AudioFiles/audio-setting-bridge.html";
+const AUDIO_BRIDGE_ORIGIN = "https://masa-ehara.github.io";
+const AUDIO_BRIDGE_URL = "https://masa-ehara.github.io/AudioFiles/audio-setting-bridge.html?v=3";
 let audioEnabled = true;
 const audioControls = [];
 
@@ -62,7 +63,7 @@ audioBridge.style.border = "0";
 
 function sendBridgeRequest(message) {
   if (audioBridge.contentWindow) {
-    audioBridge.contentWindow.postMessage(message, AUDIO_BRIDGE_URL);
+    audioBridge.contentWindow.postMessage(message, AUDIO_BRIDGE_ORIGIN);
   }
 }
 
