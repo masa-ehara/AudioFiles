@@ -41,11 +41,30 @@ console.info("common-audio5 version:", COMMON_AUDIO_VERSION);
 const audioPlayers = Array.from(document.querySelectorAll(".audio-player"));
 
 // ===== 音声ON/OFFスイッチ連携 =====
-// GitHub Pagesの音声設定HTMLから送られる postMessage を受け取ります。
-// スイッチが存在しないページでは、従来どおり「音声ON」で動作します。
+// Google Sitesでは、別々の埋め込みHTML同士が直接通信できないため、
+// 同じGitHub Pages上の「裏方ブリッジ」を各埋め込み内に非表示で読み込みます。
+// common-audio5本体の音声/PDF機能には手を加えず、ON/OFF連携だけを担当します。
 const AUDIO_SETTING_MESSAGE = "WAKUWAKU_AUDIO_SETTING";
+const AUDIO_BRIDGE_URL = "https://masa-ehara.github.io/AudioFiles/audio-setting-bridge.html";
 let audioEnabled = true;
 const audioControls = [];
+
+// 音声設定ブリッジをこの埋め込みHTML内に非表示で配置します。
+const audioBridge = document.createElement("iframe");
+audioBridge.src = AUDIO_BRIDGE_URL;
+audioBridge.title = "";
+audioBridge.setAttribute("aria-hidden", "true");
+audioBridge.style.display = "none";
+audioBridge.style.width = "0";
+audioBridge.style.height = "0";
+audioBridge.style.border = "0";
+(document.body || document.documentElement).appendChild(audioBridge);
+
+function sendBridgeRequest(message) {
+  if (audioBridge.contentWindow) {
+    audioBridge.contentWindow.postMessage(message, AUDIO_BRIDGE_URL);
+  }
+}
 
 function resetAudioControl(control) {
   const { audio, playButton, stopSpace, isSeparatedMode, title } = control;
@@ -69,12 +88,22 @@ window.addEventListener("message", (event) => {
     return;
   }
 
+  // ブリッジからの通知だけを受け取ります。
+  if (event.source !== audioBridge.contentWindow) {
+    return;
+  }
+
   audioEnabled = data.enabled;
 
   // OFFに切り替えた時、再生中の音声は停止します。
   if (!audioEnabled) {
     audioControls.forEach(resetAudioControl);
   }
+});
+
+audioBridge.addEventListener("load", () => {
+  // ブリッジ起動後、保存されている現在のON/OFF状態を要求します。
+  sendBridgeRequest({ type: "WAKUWAKU_AUDIO_GET" });
 });
 
 audioPlayers.forEach((container, index) => {
