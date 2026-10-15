@@ -290,11 +290,14 @@ audioPlayers.forEach((container, index) => {
       // 音声OFF中は音声を再生しません。
       // 通常モードでPDFが指定されている場合は、従来どおり資料を開きます。
       if (!audioEnabled) {
-        // 音声OFF中は再生しません。⏹️の代わりに🚫を表示します。
-        stopSpace.textContent = "🚫";
-        stopSpace.style.visibility = "visible";
-        stopSpace.style.cursor = "default";
-        stopSpace.setAttribute("aria-label", `${title} 音声OFF`);
+        // 音声OFF中は再生しません。⏹️の代わりに🚫を表示し、
+        // 次のクリックで表示を消します。
+        if (stopSpace.style.visibility === "visible") {
+          stopSpace.style.visibility = "hidden";
+        } else {
+          stopSpace.textContent = "🚫";
+          stopSpace.style.visibility = "visible";
+        }
 
         // 通常モードでPDFが指定されている場合は、従来どおり資料を開きます。
         if (!isSeparatedMode && pdfUrl) {
