@@ -327,7 +327,14 @@ audioPlayers.forEach((container, index) => {
     });
 
     // ----- 停止 -----
+    // audio.pause() によって pause イベントが後から発火するため、
+    // 明示的な停止時は、その pause イベントで ▶️ に戻さないようにする。
+    let suppressNextPauseIcon = false;
+
     stopSpace.addEventListener("click", () => {
+      if (!audio.paused) {
+        suppressNextPauseIcon = true;
+      }
       audio.pause();
       audio.currentTime = 0;
 
@@ -361,6 +368,13 @@ audioPlayers.forEach((container, index) => {
 
     // ----- 一時停止 -----
     audio.addEventListener("pause", () => {
+      // ⏹️による停止処理に伴う pause イベントでは、
+      // 停止後の 🔈 表示をそのまま維持する。
+      if (suppressNextPauseIcon) {
+        suppressNextPauseIcon = false;
+        return;
+      }
+
       if (!audio.ended) {
         if (isSeparatedMode) {
           playButton.textContent = "▶️";
