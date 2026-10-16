@@ -363,10 +363,10 @@ audioPlayers.forEach((container, index) => {
     audio.addEventListener("pause", () => {
       if (!audio.ended) {
         if (isSeparatedMode) {
-          playButton.textContent = "🔈";
+          playButton.textContent = "▶️";
           playButton.setAttribute("aria-label", `${title} 音声を再生`);
         } else {
-          playButton.textContent = "🔈 " + title;
+          playButton.textContent = "▶️ " + title;
         }
 
         // 一時停止中は停止ボタンを表示したまま
