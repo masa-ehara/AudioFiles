@@ -35,7 +35,7 @@
 const AUDIO_BASE_URL = "https://masa-ehara.github.io/AudioFiles/";
 
 // ===== バージョン情報（確認用） =====
-const COMMON_AUDIO_VERSION = "5.5";
+const COMMON_AUDIO_VERSION = "5.5.1";
 console.info("common-audio5 version:", COMMON_AUDIO_VERSION);
 
 const audioPlayers = Array.from(document.querySelectorAll(".audio-player"));
@@ -205,6 +205,8 @@ audioPlayers.forEach((container, index) => {
   // ----- 音声 -----
   // 音声なし項目では audio 要素そのものを作成しない。
   let audio = null;
+  // ⏹️停止による pause イベントと、通常の一時停止を区別するフラグ
+  let stopRequested = false;
   if (!isNoAudio) {
     audio = document.createElement("audio");
     audio.preload = "metadata";
@@ -382,6 +384,8 @@ audioPlayers.forEach((container, index) => {
 
     // ----- 停止 -----
     stopSpace.addEventListener("click", () => {
+      // pause() は pause イベントを発生させるため、先に停止要求を記録する。
+      stopRequested = true;
       audio.pause();
       audio.currentTime = 0;
 
@@ -415,9 +419,14 @@ audioPlayers.forEach((container, index) => {
 
     // ----- 一時停止 -----
     audio.addEventListener("pause", () => {
+      // ⏹️停止操作で発生した pause イベントは、▶️表示に変更しない。
+      if (stopRequested) {
+        stopRequested = false;
+        return;
+      }
+
+      // 通常の一時停止では ▶️ を表示する。
       if (!audio.ended) {
-        // 一時停止中は「▶️」を表示する。
-        // 「🔈」は未再生状態、「⏸️」は再生中として区別する。
         if (isSeparatedMode) {
           playButton.textContent = "▶️";
           playButton.setAttribute("aria-label", `${title} 音声を再開`);
@@ -425,9 +434,7 @@ audioPlayers.forEach((container, index) => {
           playButton.textContent = "▶️ " + title;
         }
 
-        // 一時停止中は停止ボタンを非表示にする。
         stopSpace.style.visibility = "hidden";
-
       }
     });
 
