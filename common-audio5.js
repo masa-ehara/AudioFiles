@@ -35,7 +35,8 @@
 const AUDIO_BASE_URL = "https://masa-ehara.github.io/AudioFiles/";
 
 // ===== バージョン情報（確認用） =====
-const COMMON_AUDIO_VERSION = "5.5.1";
+const COMMON_AUDIO_VERSION = "5.6";
+window.COMMON_AUDIO_VERSION = COMMON_AUDIO_VERSION;
 console.info("common-audio5 version:", COMMON_AUDIO_VERSION);
 
 const audioPlayers = Array.from(document.querySelectorAll(".audio-player"));
@@ -384,11 +385,13 @@ audioPlayers.forEach((container, index) => {
 
     // ----- 停止 -----
     stopSpace.addEventListener("click", () => {
-      // pause() は pause イベントを発生させるため、先に停止要求を記録する。
+      // ⏹️は「一時停止」ではなく「完全停止」。
+      // pause() が pause イベントを発生させるため、先に停止状態を記録します。
       stopRequested = true;
       audio.pause();
       audio.currentTime = 0;
 
+      // 停止直後の表示をここで確定。
       if (isSeparatedMode) {
         playButton.textContent = "🔈";
         playButton.setAttribute("aria-label", `${title} 音声を再生`);
@@ -400,6 +403,22 @@ audioPlayers.forEach((container, index) => {
       stopSpace.style.visibility = "hidden";
       stopSpace.style.cursor = "pointer";
       stopSpace.setAttribute("aria-label", `${title} 音声を停止`);
+
+      // ブラウザによって pause イベントが非同期になる場合にも、
+      // 停止表示をもう一度確定して、▶️への上書きを防止します。
+      setTimeout(() => {
+        if (stopRequested) {
+          stopRequested = false;
+        }
+        if (isSeparatedMode) {
+          playButton.textContent = "🔈";
+          playButton.setAttribute("aria-label", `${title} 音声を再生`);
+        } else {
+          playButton.textContent = "🔈 " + title;
+        }
+        stopSpace.textContent = audioEnabled ? "⏹️" : "🚫";
+        stopSpace.style.visibility = "hidden";
+      }, 0);
     });
 
     // ----- 再生開始 -----
@@ -419,9 +438,9 @@ audioPlayers.forEach((container, index) => {
 
     // ----- 一時停止 -----
     audio.addEventListener("pause", () => {
-      // ⏹️停止操作で発生した pause イベントは、▶️表示に変更しない。
+      // ⏹️停止操作で発生した pause イベントでは表示を変更しない。
+      // stopRequested の解除は停止処理側で行います。
       if (stopRequested) {
-        stopRequested = false;
         return;
       }
 
