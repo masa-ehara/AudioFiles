@@ -416,15 +416,16 @@ audioPlayers.forEach((container, index) => {
     // ----- 一時停止 -----
     audio.addEventListener("pause", () => {
       if (!audio.ended) {
+        // 一時停止中は「▶️」を表示する。
+        // 「🔈」は未再生状態、「⏸️」は再生中として区別する。
         if (isSeparatedMode) {
-          playButton.textContent = "🔈";
-          playButton.setAttribute("aria-label", `${title} 音声を再生`);
+          playButton.textContent = "▶️";
+          playButton.setAttribute("aria-label", `${title} 音声を再開`);
         } else {
-          playButton.textContent = "🔈 " + title;
+          playButton.textContent = "▶️ " + title;
         }
 
-        // 一時停止中は停止ボタンを表示したまま
-        // stopSpace.style.visibility = "visible";
+        // 一時停止中は停止ボタンを非表示にする。
         stopSpace.style.visibility = "hidden";
 
       }
