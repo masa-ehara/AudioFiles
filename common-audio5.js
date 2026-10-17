@@ -35,10 +35,57 @@
 const AUDIO_BASE_URL = "https://masa-ehara.github.io/AudioFiles/";
 
 // ===== バージョン情報（確認用） =====
-const COMMON_AUDIO_VERSION = "5.3";
+const COMMON_AUDIO_VERSION = "5.4";
 console.info("common-audio5 version:", COMMON_AUDIO_VERSION);
 
 const audioPlayers = Array.from(document.querySelectorAll(".audio-player"));
+
+// ===== PDF/リンク表示：以前の「新規Window＋右上方向へずらす」仕様を復元 =====
+// Mac：元Windowを基準に、新しいWindowを右上方向へずらして表示。
+// iPhone / iPad：従来どおり新しい閲覧コンテキストで表示。
+const isMacEnvironment =
+  /Macintosh|MacIntel|MacPPC|Mac68K/i.test(navigator.userAgent) &&
+  !/iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+function openPdf(pdfUrl) {
+  if (isMacEnvironment) {
+    const popupWidth = 1000;
+    const popupHeight = 800;
+
+    const currentLeft = window.screenX ?? window.screenLeft ?? 0;
+    const currentTop = window.screenY ?? window.screenTop ?? 0;
+    const currentWidth = window.outerWidth || window.innerWidth || 1200;
+    const currentRight = currentLeft + currentWidth;
+
+    // 元Windowと大きく重ねつつ、右側へ約250pxはみ出す。
+    const left = Math.round(currentRight - 750);
+    // 元Windowの上端より約150px上へ。
+    const top = Math.round(currentTop - 150);
+
+    const popup = window.open(
+      pdfUrl,
+      "pdfWindow",
+      `popup=yes,width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=yes`
+    );
+
+    if (popup) {
+      // ブラウザ側で初期位置が補正された場合にも、もう一度指定位置へ。
+      setTimeout(() => {
+        try {
+          popup.moveTo(left, top);
+          popup.resizeTo(popupWidth, popupHeight);
+        } catch (e) {
+          // ブラウザがWindow位置変更を禁止している場合は何もしない。
+        }
+      }, 100);
+    }
+
+    return popup;
+  }
+
+  return window.open(pdfUrl, "_blank");
+}
+
 
 // ===== 音声ON/OFFスイッチ連携 =====
 // Google Sitesでは、別々の埋め込みHTML同士が直接通信できないため、
@@ -249,6 +296,13 @@ audioPlayers.forEach((container, index) => {
       titleLink.removeAttribute("rel");
     }
 
+    if (pdfUrl) {
+      titleLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        openPdf(pdfUrl);
+      });
+    }
+
     element.appendChild(playButton);
     element.appendChild(document.createTextNode(" "));
     element.appendChild(titleLink);
@@ -299,7 +353,7 @@ audioPlayers.forEach((container, index) => {
 
         // 通常モードでPDFが指定されている場合は、従来どおり資料を開きます。
         if (!isSeparatedMode && pdfUrl) {
-          window.open(pdfUrl, "_blank");
+          openPdf(pdfUrl);
         }
         return;
       }
@@ -316,7 +370,7 @@ audioPlayers.forEach((container, index) => {
           // 音声ボタンのクリックで資料も開く。
           // Uモードでは資料表示を行わない。
           if (!isSeparatedMode && pdfUrl) {
-            window.open(pdfUrl, "_blank");
+            openPdf(pdfUrl);
           }
         } else {
           audio.pause();
@@ -327,11 +381,7 @@ audioPlayers.forEach((container, index) => {
     });
 
     // ----- 停止 -----
-    // ⏹️停止による pause イベントで、▶️へ上書きされないようにします。
-    let isStopping = false;
-
     stopSpace.addEventListener("click", () => {
-      isStopping = true;
       audio.pause();
       audio.currentTime = 0;
 
@@ -365,17 +415,12 @@ audioPlayers.forEach((container, index) => {
 
     // ----- 一時停止 -----
     audio.addEventListener("pause", () => {
-      if (isStopping) {
-        isStopping = false;
-        return;
-      }
-
       if (!audio.ended) {
         if (isSeparatedMode) {
-          playButton.textContent = "▶️";
+          playButton.textContent = "🔈";
           playButton.setAttribute("aria-label", `${title} 音声を再生`);
         } else {
-          playButton.textContent = "▶️ " + title;
+          playButton.textContent = "🔈 " + title;
         }
 
         // 一時停止中は停止ボタンを表示したまま
@@ -411,7 +456,7 @@ audioPlayers.forEach((container, index) => {
     // 通常モードでは、PDFがあれば ▪️＋表示名 のボタンから開く。
     if (!isSeparatedMode && pdfUrl) {
       playButton.addEventListener("click", () => {
-        window.open(pdfUrl, "_blank");
+        openPdf(pdfUrl);
       });
     }
   }
