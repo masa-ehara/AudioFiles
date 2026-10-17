@@ -35,7 +35,7 @@
 const AUDIO_BASE_URL = "https://masa-ehara.github.io/AudioFiles/";
 
 // ===== バージョン情報（確認用） =====
-const COMMON_AUDIO_VERSION = "5.4";
+const COMMON_AUDIO_VERSION = "5.5";
 console.info("common-audio5 version:", COMMON_AUDIO_VERSION);
 
 const audioPlayers = Array.from(document.querySelectorAll(".audio-player"));
@@ -64,7 +64,7 @@ function openPdf(pdfUrl) {
 
     const popup = window.open(
       pdfUrl,
-      "pdfWindow",
+      "_blank",
       `popup=yes,width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
 
