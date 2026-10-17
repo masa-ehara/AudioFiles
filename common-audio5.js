@@ -35,15 +35,12 @@
 const AUDIO_BASE_URL = "https://masa-ehara.github.io/AudioFiles/";
 
 // ===== バージョン情報（確認用） =====
-const COMMON_AUDIO_VERSION = "5.6";
-window.COMMON_AUDIO_VERSION = COMMON_AUDIO_VERSION;
+const COMMON_AUDIO_VERSION = "5.3";
 console.info("common-audio5 version:", COMMON_AUDIO_VERSION);
 
 const audioPlayers = Array.from(document.querySelectorAll(".audio-player"));
 
-// ===== PDF/リンク表示：以前の「新規Window＋右上方向へずらす」仕様を復元 =====
-// Mac：元Windowを基準に、新しいWindowを右上方向へずらして表示。
-// iPhone / iPad：従来どおり新しい閲覧コンテキストで表示。
+// ===== PDF/リンク表示：既存の音声処理には触れず、新規Windowを右上へずらす =====
 const isMacEnvironment =
   /Macintosh|MacIntel|MacPPC|Mac68K/i.test(navigator.userAgent) &&
   !/iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -52,41 +49,26 @@ function openPdf(pdfUrl) {
   if (isMacEnvironment) {
     const popupWidth = 1000;
     const popupHeight = 800;
-
     const currentLeft = window.screenX ?? window.screenLeft ?? 0;
     const currentTop = window.screenY ?? window.screenTop ?? 0;
     const currentWidth = window.outerWidth || window.innerWidth || 1200;
     const currentRight = currentLeft + currentWidth;
-
-    // 元Windowと大きく重ねつつ、右側へ約250pxはみ出す。
     const left = Math.round(currentRight - 750);
-    // 元Windowの上端より約150px上へ。
     const top = Math.round(currentTop - 150);
-
     const popup = window.open(
       pdfUrl,
       "_blank",
       `popup=yes,width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=yes`
     );
-
     if (popup) {
-      // ブラウザ側で初期位置が補正された場合にも、もう一度指定位置へ。
       setTimeout(() => {
-        try {
-          popup.moveTo(left, top);
-          popup.resizeTo(popupWidth, popupHeight);
-        } catch (e) {
-          // ブラウザがWindow位置変更を禁止している場合は何もしない。
-        }
+        try { popup.moveTo(left, top); popup.resizeTo(popupWidth, popupHeight); } catch (e) {}
       }, 100);
     }
-
     return popup;
   }
-
   return window.open(pdfUrl, "_blank");
 }
-
 
 // ===== 音声ON/OFFスイッチ連携 =====
 // Google Sitesでは、別々の埋め込みHTML同士が直接通信できないため、
@@ -206,8 +188,6 @@ audioPlayers.forEach((container, index) => {
   // ----- 音声 -----
   // 音声なし項目では audio 要素そのものを作成しない。
   let audio = null;
-  // ⏹️停止による pause イベントと、通常の一時停止を区別するフラグ
-  let stopRequested = false;
   if (!isNoAudio) {
     audio = document.createElement("audio");
     audio.preload = "metadata";
@@ -292,18 +272,17 @@ audioPlayers.forEach((container, index) => {
     titleLink.style.verticalAlign = "middle";
 
     // Uモードでは表示名を常時下線表示。
-    // PDF/フォルダURLがない場合はクリックしても遷移しない。
-    if (!pdfUrl) {
-      titleLink.removeAttribute("href");
-      titleLink.removeAttribute("target");
-      titleLink.removeAttribute("rel");
-    }
-
+    // PDF/フォルダURLがある場合は、新規Windowを右上へずらして開く。
     if (pdfUrl) {
       titleLink.addEventListener("click", (event) => {
         event.preventDefault();
         openPdf(pdfUrl);
       });
+    }
+    if (!pdfUrl) {
+      titleLink.removeAttribute("href");
+      titleLink.removeAttribute("target");
+      titleLink.removeAttribute("rel");
     }
 
     element.appendChild(playButton);
@@ -384,14 +363,17 @@ audioPlayers.forEach((container, index) => {
     });
 
     // ----- 停止 -----
+    // audio.pause() によって pause イベントが後から発火するため、
+    // 明示的な停止時は、その pause イベントで ▶️ に戻さないようにする。
+    let suppressNextPauseIcon = false;
+
     stopSpace.addEventListener("click", () => {
-      // ⏹️は「一時停止」ではなく「完全停止」。
-      // pause() が pause イベントを発生させるため、先に停止状態を記録します。
-      stopRequested = true;
+      if (!audio.paused) {
+        suppressNextPauseIcon = true;
+      }
       audio.pause();
       audio.currentTime = 0;
 
-      // 停止直後の表示をここで確定。
       if (isSeparatedMode) {
         playButton.textContent = "🔈";
         playButton.setAttribute("aria-label", `${title} 音声を再生`);
@@ -403,22 +385,6 @@ audioPlayers.forEach((container, index) => {
       stopSpace.style.visibility = "hidden";
       stopSpace.style.cursor = "pointer";
       stopSpace.setAttribute("aria-label", `${title} 音声を停止`);
-
-      // ブラウザによって pause イベントが非同期になる場合にも、
-      // 停止表示をもう一度確定して、▶️への上書きを防止します。
-      setTimeout(() => {
-        if (stopRequested) {
-          stopRequested = false;
-        }
-        if (isSeparatedMode) {
-          playButton.textContent = "🔈";
-          playButton.setAttribute("aria-label", `${title} 音声を再生`);
-        } else {
-          playButton.textContent = "🔈 " + title;
-        }
-        stopSpace.textContent = audioEnabled ? "⏹️" : "🚫";
-        stopSpace.style.visibility = "hidden";
-      }, 0);
     });
 
     // ----- 再生開始 -----
@@ -438,22 +404,25 @@ audioPlayers.forEach((container, index) => {
 
     // ----- 一時停止 -----
     audio.addEventListener("pause", () => {
-      // ⏹️停止操作で発生した pause イベントでは表示を変更しない。
-      // stopRequested の解除は停止処理側で行います。
-      if (stopRequested) {
+      // ⏹️による停止処理に伴う pause イベントでは、
+      // 停止後の 🔈 表示をそのまま維持する。
+      if (suppressNextPauseIcon) {
+        suppressNextPauseIcon = false;
         return;
       }
 
-      // 通常の一時停止では ▶️ を表示する。
       if (!audio.ended) {
         if (isSeparatedMode) {
           playButton.textContent = "▶️";
-          playButton.setAttribute("aria-label", `${title} 音声を再開`);
+          playButton.setAttribute("aria-label", `${title} 音声を再生`);
         } else {
           playButton.textContent = "▶️ " + title;
         }
 
+        // 一時停止中は停止ボタンを表示したまま
+        // stopSpace.style.visibility = "visible";
         stopSpace.style.visibility = "hidden";
+
       }
     });
 
