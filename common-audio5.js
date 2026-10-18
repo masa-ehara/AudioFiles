@@ -346,14 +346,16 @@ audioPlayers.forEach((container, index) => {
             audio.currentTime = 0;
           }
 
-          await audio.play();
+          // 音声再生開始をユーザー操作の直下で実行し、
+          // その直後に通常モードの資料を開きます。
+          // Uモードでは資料表示を行いません。
+          const playPromise = audio.play();
 
-          // 通常モードでは従来どおり、
-          // 音声ボタンのクリックで資料も開く。
-          // Uモードでは資料表示を行わない。
           if (!isSeparatedMode && pdfUrl) {
             openPdf(pdfUrl);
           }
+
+          await playPromise;
         } else {
           audio.pause();
         }
