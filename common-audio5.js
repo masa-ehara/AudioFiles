@@ -45,6 +45,12 @@ const isMacEnvironment =
   /Macintosh|MacIntel|MacPPC|Mac68K/i.test(navigator.userAgent) &&
   !/iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+// iPadOSの「デスクトップ用Webサイト」ではMacと同じUAになるため、
+// タッチポイントも確認してiPadを判定します。
+const isIOSLike =
+  /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+  (/Macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+
 function openPdf(pdfUrl) {
   if (isMacEnvironment) {
     const popupWidth = 1000;
@@ -208,8 +214,22 @@ audioPlayers.forEach((container, index) => {
   element.replaceChildren();
 
   // ----- 音声再生／資料表示ボタン -----
-  const playButton = document.createElement("button");
-  playButton.type = "button";
+  // iPhone/iPadでは、PDFを開く操作を「実際のリンク」として処理する。
+  // Google Sites内のiframeでは、button + window.open() よりも
+  // anchorの標準リンク動作の方が確実に新規タブを開けるため。
+  // Macでは従来のbutton + openPdf()を維持し、既存の配置機能を守る。
+  const useNativePdfLink =
+    !isSeparatedMode && !!pdfUrl && isIOSLike;
+  const playButton = document.createElement(useNativePdfLink ? "a" : "button");
+
+  if (useNativePdfLink) {
+    playButton.href = pdfUrl;
+    playButton.target = "_blank";
+    playButton.rel = "noopener noreferrer";
+  } else {
+    playButton.type = "button";
+  }
+
   playButton.style.fontSize = fntsize;
   playButton.style.padding = "0px 4px";
   playButton.style.verticalAlign = "middle";
@@ -322,19 +342,26 @@ audioPlayers.forEach((container, index) => {
 
   // ----- 音声あり項目の処理 -----
   if (!isNoAudio && audio) {
-    playButton.addEventListener("click", async () => {
-      // 音声OFF中は音声を再生しません。
-      // 通常モードでPDFが指定されている場合は、従来どおり資料を開きます。
+    playButton.addEventListener("click", async (event) => {
+      const nativePdfLink = useNativePdfLink && !!pdfUrl;
+
+      // iPhone/iPadの通常モードでは、PDFを開くときだけ
+      // anchorの標準リンク動作をそのまま利用する。
+      // 音声再生中のクリックは「一時停止」なのでリンクを止める。
+      if (nativePdfLink && !audio.paused && !audio.ended) {
+        event.preventDefault();
+      }
+
+      // 音声OFF中
       if (!audioEnabled) {
-        // 音声OFF中は再生しません。
-        // ⏹️の代わりに🚫を表示し、通常時と同じ表示／非表示の遷移だけ行います。
         stopSpace.textContent = "🚫";
         stopSpace.style.visibility =
           stopSpace.style.visibility === "visible" ? "hidden" : "visible";
         stopSpace.style.cursor = "pointer";
 
-        // 通常モードでPDFが指定されている場合は、従来どおり資料を開きます。
-        if (!isSeparatedMode && pdfUrl) {
+        // iPhone/iPadでは標準リンクに任せる。
+        // Mac等では従来どおりopenPdf()を使う。
+        if (!nativePdfLink && !isSeparatedMode && pdfUrl) {
           openPdf(pdfUrl);
         }
         return;
@@ -346,14 +373,14 @@ audioPlayers.forEach((container, index) => {
             audio.currentTime = 0;
           }
 
-          await audio.play();
-
-          // 通常モードでは従来どおり、
-          // 音声ボタンのクリックで資料も開く。
-          // Uモードでは資料表示を行わない。
-          if (!isSeparatedMode && pdfUrl) {
+          // Mac等では従来のopenPdf()を維持。
+          // iPhone/iPadではanchorの標準リンク動作に任せる。
+          // これにより、Safariがユーザー操作として確実に扱える。
+          if (!nativePdfLink && !isSeparatedMode && pdfUrl) {
             openPdf(pdfUrl);
           }
+
+          await audio.play();
         } else {
           audio.pause();
         }
