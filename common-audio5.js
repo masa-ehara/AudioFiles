@@ -346,14 +346,14 @@ audioPlayers.forEach((container, index) => {
             audio.currentTime = 0;
           }
 
-          // iPhone/iPadを含め、端末側の標準仕様に任せる。
-          // MacだけopenPdf()内で位置を指定する。
+          await audio.play();
+
+          // 通常モードでは従来どおり、
+          // 音声ボタンのクリックで資料も開く。
           // Uモードでは資料表示を行わない。
           if (!isSeparatedMode && pdfUrl) {
             openPdf(pdfUrl);
           }
-
-          await audio.play();
         } else {
           audio.pause();
         }
