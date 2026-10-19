@@ -43,7 +43,8 @@ const audioPlayers = Array.from(document.querySelectorAll(".audio-player"));
 // ===== PDF/リンク表示：既存の音声処理には触れず、新規Windowを右上へずらす =====
 const isMacEnvironment =
   /Macintosh|MacIntel|MacPPC|Mac68K/i.test(navigator.userAgent) &&
-  !/iPhone|iPad|iPod/i.test(navigator.userAgent);
+  !/iPhone|iPad|iPod/i.test(navigator.userAgent) &&
+  !(navigator.maxTouchPoints > 0);
 
 function openPdf(pdfUrl) {
   if (isMacEnvironment) {
